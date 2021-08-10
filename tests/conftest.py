@@ -3,18 +3,14 @@ import logging
 import allure
 import pytest
 
-
-from lib.db_connection import DBConnection
-from config.db_consts import DB_ORACLE_HOST, DB_ORACLE_PORT, DB_ORACLE_SID, DB_ORACLE_USERNAME, DB_ORACLE_PASSWORD
 from lib.utils import Fake
-from API.rpc.CardGroup import CardGroupAPI
-from API.db.CardGroup import CardGroupDBAPI
-from API.db.Client import ClientDBAPI
+from API.client.rpc import RPCClient
+from API.client.db import DBClient
 
 
 pytest_plugins = [
-    "tests.functional.test_card_group.cardgroup_fixtures",
-    "tests.functional.test_card_group.client_fixtures",
+    "tests.fixtures.cardgroup",
+    "tests.fixtures.client",
 ]
 
 fake = Fake()
@@ -60,36 +56,26 @@ def pytest_runtest_teardown():
         yield
 
 
-@pytest.fixture(scope="class")
-def db_session():
-    db_conn = DBConnection(DB_ORACLE_HOST, DB_ORACLE_PORT,
-                           DB_ORACLE_SID, DB_ORACLE_USERNAME,
-                           DB_ORACLE_PASSWORD)
-
-    yield db_conn.session
-
-    db_conn.close()
+# @pytest.fixture(scope="class")
+# def clients(request):
+#     request.cls.DBClient = DBClient()
+#     request.cls.RPCClient = RPCClient()
+#     return request.cls
 
 
 @pytest.fixture(autouse=True, scope="class")
-def setup_fixture(request, db_session, client_generator, cardgroup_generator, dbapi_fixture, api_fixture):
-    request.cls.db_session = db_session
+def setup_fixture(request, client_generator, cardgroup_generator):
     request.cls.default_client = client_generator()
     request.cls.client_generator = client_generator
     request.cls.cardgroup_generator = cardgroup_generator
     request.cls.default_cardgroup = cardgroup_generator(request.cls.default_client.id)
-    request.cls.DBAPI = dbapi_fixture
-    request.cls.API = api_fixture
 
 
-@pytest.fixture(scope="class")
-def api_fixture(request):
-    request.cls.cardGroupAPI = CardGroupAPI()
-    return request.cls
+class Clients:
+    RPC = RPCClient()
+    DB = DBClient(url='oracle+cx_oracle://pbill:sql@192.168.73.3:1521/orcl')
 
 
-@pytest.fixture(scope="class")
-def dbapi_fixture(request, db_session):
-    request.cls.cardGroupDB = CardGroupDBAPI(db_session)
-    request.cls.clientDB = ClientDBAPI(db_session)
-    return request.cls
+@pytest.fixture(scope="class", autouse=True)
+def clients():
+    yield Clients

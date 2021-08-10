@@ -3,8 +3,9 @@ from sqlalchemy import CHAR, CheckConstraint, Column, DateTime, ForeignKey, Fore
 from sqlalchemy.dialects.oracle import NUMBER
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from .repr_extension import ReprExtension
 
-Base = declarative_base()
+Base = declarative_base(cls=ReprExtension)
 metadata = Base.metadata
 
 
