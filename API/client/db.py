@@ -1,6 +1,12 @@
 from API.controller.db.CardGroup import CardGroupDBController
 from API.controller.db.Client import ClientDBController
 from API.controller.db.Card import CardDBController
+from API.controller.db.Company import CompanyDBController
+from API.controller.db.Company2role import Company2roleDBController
+from API.controller.db.CompanyRole import CompanyRoleDBController
+from API.controller.db.Currency import CurrencyDBController
+from API.controller.db.VirtualGroup import VirtualGroupDBController
+from API.controller.db.AccountingFile import AccountingFileDBController
 
 
 class DBClient:
@@ -16,3 +22,9 @@ class DBClient:
         self.card_group = CardGroupDBController(url, pool_size, max_overflow)
         self.client = ClientDBController(url, pool_size, max_overflow)
         self.card = CardDBController(url, pool_size, max_overflow)
+        self.company = CompanyDBController(url, pool_size, max_overflow)
+        self.company2role = Company2roleDBController(url, pool_size, max_overflow)
+        self.company_role = CompanyRoleDBController(url, pool_size, max_overflow)
+        self.currency = CurrencyDBController(url, pool_size, max_overflow)
+        self.virtual_group = VirtualGroupDBController(url, pool_size, max_overflow)
+        self.accounting_file = AccountingFileDBController(url, pool_size, max_overflow)

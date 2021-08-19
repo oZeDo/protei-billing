@@ -1,4 +1,4 @@
-from models.database.reflected_db import Client
+from models.database.reflected_db import Client, Virtualgroup
 from models.database.sequencies import client_id_seq
 from API.controller.db.base import BaseDBController
 from lib.utils import Fake
@@ -7,7 +7,6 @@ fake = Fake()
 
 
 class ClientDBController(BaseDBController):
-
     def create(self):
         new_client = Client(id=client_id_seq.next_value(),
                             clienttypeid='2',
@@ -23,6 +22,16 @@ class ClientDBController(BaseDBController):
         self.session.add(new_client)
         self.session.commit()
         return new_client
+
+    # def create_client(self, mvno: Virtualgroup) -> Client:
+    #     client = Client(id=client_id_seq,
+    #                     clienttypeid=1,
+    #                     dname=fake.name(),
+    #                     vgroupid=mvno.id,
+    #                     billmode_id=1)
+    #     self.session.add(client)
+    #     self.session.commit_changes()
+    #     return client
 
     def delete(self, client_id):
         self.session.query(Client).filter(Client.id == client_id).delete()

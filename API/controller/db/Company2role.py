@@ -6,21 +6,20 @@ from lib.utils import Fake
 fake = Fake()
 
 
-class CompanyDBController(BaseDBController):
-    """Контроллер компании"""
-    def create(self) -> Company:
-        company = Company(id=company_id_seq.next_value(),
-                          comp_name=fake.company(),
-                          comp_code=fake.uuid4())
+class Company2roleDBController(BaseDBController):
+    """Контроллер many(Company) to many(CompanyRole)"""
+    def create(self, company: Company, role) -> None:
+        company_role = Company2role(company2role_id_seq.next_value(),
+                                    company=company.id, roleid=role)
         self.session.add(company)
         self.session.commit()
-        return company
 
-    def read(self, company_id) -> Company:
-        cg_from_db: Company = self.session.query(Company).filter(Company.id == company_id).first()
+    def read(self, company: Company) -> [Company2role]:
+        company_roles: [Company2role] = self.session.query(Company2role).filter(Company2role.company == company.id)
         self.session.commit()  # !TODO: костыль
-        return cg_from_db
+        return company_roles
 
     def delete(self, company_id) -> None:
         self.session.query(Company).filter(Company.id == company_id).delete()
         self.session.commit()
+
