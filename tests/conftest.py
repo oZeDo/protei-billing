@@ -1,3 +1,4 @@
+import functools
 import logging
 
 import allure
@@ -14,6 +15,26 @@ pytest_plugins = [
 ]
 
 fake = Fake()
+
+
+def safe_teardown(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception as E:
+            raise E
+    return wrapper
+
+
+def for_all_methods(decorator):
+    @functools.wraps(decorator)
+    def decorate(cls):
+        for attr in cls.__dict__:  # there's propably a better way to do this
+            if callable(getattr(cls, attr)):
+                setattr(cls, attr, decorator(getattr(cls, attr)))
+        return cls
+    return decorate
 
 
 class AllureLoggingHandler(logging.Handler):

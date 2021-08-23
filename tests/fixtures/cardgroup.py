@@ -1,4 +1,3 @@
-import functools
 import allure
 import pytest
 from models.database.sequencies import cardgroup_id_seq
@@ -10,28 +9,6 @@ fake = Fake()
 @pytest.fixture
 def nonexistent_cardgroup(clients):
     return clients.DB.card_group.session.execute(cardgroup_id_seq)
-
-
-def safe_teardown(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except Exception as E:
-            raise E
-
-    return wrapper
-
-
-def for_all_methods(decorator):
-    @functools.wraps(decorator)
-    def decorate(cls):
-        for attr in cls.__dict__:  # there's propably a better way to do this
-            if callable(getattr(cls, attr)):
-                setattr(cls, attr, decorator(getattr(cls, attr)))
-        return cls
-
-    return decorate
 
 
 @pytest.yield_fixture(scope="class")

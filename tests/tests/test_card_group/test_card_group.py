@@ -233,7 +233,8 @@ class TestDelete:
             delete_cardgroup_from_db(parent_cg_model.id)
 
 
-# from tests.fixtures.cardgroup import safe_teardown, for_all_methods
+
+#from tests.conftest import safe_teardown, for_all_methods
 #
 # @pytest.mark.usefixtures('setup_fixture')
 # @for_all_methods(safe_teardown)
