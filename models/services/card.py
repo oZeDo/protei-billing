@@ -196,12 +196,19 @@ class ActualCardStateInfo(BaseModelOperations):
     unpaidInvoices: List[ClientInvoiceShortInfo] = atr()
 
 
+@attr.s
+class Long(BaseModelOperations):
+    long: [int] = atr()
+
+
 if __name__ == "__main__":
     # test = Card()
     # a = NumberState(id=1, code="1")
     # b = CardOperativeStateChangeJournal()
-    a = CardInfo(cardId="123", status="NOT FOUND")
-    test = FailedCards([a])
+    # a = CardInfo(cardId="123", status="NOT FOUND")
+    # test = FailedCards([a])
+    a = [1, 2, 3]
+    test = Long(a)
     print(test.to_xml(root="test"))
     # test = CardStateInfo(numberState=a, cardOperativeStateChangeHistory=[b])
     print(test)
