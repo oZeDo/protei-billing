@@ -15,7 +15,7 @@ def nonexistent_cardgroup(clients):
 def cardgroup_generator(clients):
     _id = []
 
-    def _get(client_id, *args):
+    def _get(_, client_id, *args):
         new_cardgroup = clients.DB.card_group.create(client_id)
         _id.append(new_cardgroup.id)
         return new_cardgroup

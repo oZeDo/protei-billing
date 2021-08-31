@@ -1,4 +1,4 @@
-from models.database.reflected_db import Accountingfile, Virtualgroup, Currency
+from models.database.reflected_db import Accountingfile
 from models.database.sequencies import accounting_file_id_seq
 from API.controller.db.base import BaseDBController
 from lib.utils import Fake
@@ -7,12 +7,12 @@ fake = Fake()
 
 
 class AccountingFileDBController(BaseDBController):
-    def create(self, mvno: Virtualgroup, currency: Currency) -> Accountingfile:
+    def create(self, virtual_group_id, currency_id) -> Accountingfile:
         accounting_file = Accountingfile(id=accounting_file_id_seq.next_value(),
-                                         vgroupid=mvno.id,
+                                         vgroupid=virtual_group_id,
                                          state=2,
                                          name=fake.catch_phrase(),
-                                         currencyid=currency.id,
+                                         currencyid=currency_id,
                                          code=fake.uuid4()[:32])
         self.session.add(accounting_file)
         self.session.commit()

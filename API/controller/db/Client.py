@@ -7,31 +7,16 @@ fake = Fake()
 
 
 class ClientDBController(BaseDBController):
-    def create(self):
-        new_client = Client(id=client_id_seq.next_value(),
-                            clienttypeid='2',
-                            dname=fake.name(),
-                            bank_details='{"inn":"400324093240324","okpo":"3004934","kpp":"40093204934",'
-                                         '"bankname":"Bank","settlacc":"40090394039409324",'
-                                         '"corracc":"40049309403294322","bik":"40093","ogrn":null}',
-                            vgroupid='1',
-                            dname_up=fake.name(),
-                            apptype=0,
-                            ntf_method='sms',
-                            billmode_id='2')
-        self.session.add(new_client)
-        self.session.commit()
-        return new_client
 
-    # def create_client(self, mvno: Virtualgroup) -> Client:
-    #     client = Client(id=client_id_seq,
-    #                     clienttypeid=1,
-    #                     dname=fake.name(),
-    #                     vgroupid=mvno.id,
-    #                     billmode_id=1)
-    #     self.session.add(client)
-    #     self.session.commit_changes()
-    #     return client
+    def create(self, virtualgroup_id) -> Client:
+        client = Client(id=client_id_seq.next_value(),
+                        clienttypeid=1,
+                        dname=fake.name(),
+                        vgroupid=virtualgroup_id,
+                        billmode_id=1)
+        self.session.add(client)
+        self.session.commit()
+        return client
 
     def delete(self, client_id):
         self.session.query(Client).filter(Client.id == client_id).delete()

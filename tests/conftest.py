@@ -12,9 +12,31 @@ from API.client.db import DBClient
 pytest_plugins = [
     "tests.fixtures.cardgroup",
     "tests.fixtures.client",
+    "tests.fixtures.company",
+    "tests.fixtures.currency",
+    "tests.fixtures.virtual_group",
+    "tests.fixtures.accounting_file"
 ]
 
 fake = Fake()
+
+
+# def safe_teardown(destruction_method):
+#     def decorator(func):
+#         def wrapper(clients, *args, **kwargs):
+#             try:
+#                 for i in func(clients, *args, **kwargs):
+#                     yield i
+#             finally:
+#                 destruction_method(clients)
+#                 print("я тут был")
+#         return wrapper
+#     return decorator
+#
+#
+# def cardgroup_destructor(clients):
+#     for i in _id:
+#         clients.DB.card_group.delete(int(i))
 
 
 def safe_teardown(func):
@@ -85,11 +107,31 @@ def pytest_runtest_teardown():
 
 
 @pytest.fixture(autouse=True, scope="class")
-def setup_fixture(request, client_generator, cardgroup_generator):
-    request.cls.default_client = client_generator()
+def setup_fixture(request, company_generator, currency_generator, virtual_group_generator, accounting_file_generator,
+                  client_generator, cardgroup_generator):
+    request.cls.company_generator = company_generator
+    request.cls.default_company = company_generator()
+
+    request.cls.currency_generator = currency_generator
+    request.cls.default_currency = currency_generator()
+
+    request.cls.virtual_group_generator = virtual_group_generator
+    request.cls.default_virtual_group = virtual_group_generator(request.cls,
+                                                                request.cls.default_company.id,
+                                                                request.cls.default_currency.id)
+
+    request.cls.accounting_file_generator = accounting_file_generator
+    request.cls.default_accounting_file = accounting_file_generator(request.cls,
+                                                                    request.cls.default_virtual_group.id,
+                                                                    request.cls.default_currency.id)
+
     request.cls.client_generator = client_generator
+    request.cls.default_client = client_generator(request.cls,
+                                                  request.cls.default_virtual_group.id)
+
     request.cls.cardgroup_generator = cardgroup_generator
-    request.cls.default_cardgroup = cardgroup_generator(request.cls.default_client.id)
+    request.cls.default_cardgroup = cardgroup_generator(request.cls,
+                                                        request.cls.default_client.id)
 
 
 class Clients:

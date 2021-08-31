@@ -7,8 +7,8 @@ from models.database.sequencies import client_id_seq
 def client_generator(clients):
     _id = []
 
-    def _get(*args):
-        new_client = clients.DB.client.create()
+    def _get(_, virtual_group_id, *args):
+        new_client = clients.DB.client.create(virtual_group_id)
         _id.append(new_client.id)
         return new_client
 

@@ -1,4 +1,4 @@
-from models.database.reflected_db import Currency, Companyrole
+from models.database.reflected_db import Currency
 from models.database.sequencies import currency_id_seq
 from API.controller.db.base import BaseDBController
 from lib.utils import Fake
@@ -17,9 +17,9 @@ class CurrencyDBController(BaseDBController):
                             code=code,
                             baserate=1,
                             precision=2,
-                            displayorder=self.session.query(Companyrole.id).count())
+                            displayorder=self.session.query(Currency).count()+1)
         self.session.add(currency)
-        self.session.commit_changes()
+        self.session.commit()
         return currency
 
     def read(self, currency_id) -> Currency:
