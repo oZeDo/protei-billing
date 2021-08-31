@@ -7,6 +7,8 @@ from API.controller.db.CompanyRole import CompanyRoleDBController
 from API.controller.db.Currency import CurrencyDBController
 from API.controller.db.VirtualGroup import VirtualGroupDBController
 from API.controller.db.AccountingFile import AccountingFileDBController
+from API.controller.db.Account import AccountDBController
+from API.controller.db.Basecard import BaseCardDBController
 
 
 class DBClient:
@@ -28,3 +30,5 @@ class DBClient:
         self.currency = CurrencyDBController(url, pool_size, max_overflow)
         self.virtual_group = VirtualGroupDBController(url, pool_size, max_overflow)
         self.accounting_file = AccountingFileDBController(url, pool_size, max_overflow)
+        self.account = AccountDBController(url, pool_size, max_overflow)
+        self.base_card = BaseCardDBController(url, pool_size, max_overflow)
