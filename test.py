@@ -1,53 +1,51 @@
-import requests
-from hashlib import md5
-import xmltodict
-import pprint
-from bs4 import BeautifulSoup
-
-
-# url = "http://192.168.73.2:8686"
-# headers = {
-#     "X-Login": "potapov",
-#     "X-Password": md5("sql".encode("utf-8")).hexdigest().upper(),
-#     "X-ReqInitiator": "ADMIN_UI"
-# }
+# import itertools
 #
-# resp = requests.get(url=url+"/card_service?method=get_card_state_info&msisdn=79130000000", headers=headers)
-# soup = BeautifulSoup(resp.content, "lxml")
-# print(soup.prettify())
+# # Значения параметров
+# values = ["correct", "incorrect", "empty"]
+#
+# # Словарь параметров с их типом
+# params = {
+#     "msisdn": {
+#         "type": "OM",
+#     },
+#     "imsi": {
+#         "type": "OM",
+#     },
+#     "limit": {
+#         "type": "M",
+#     },
+#     "enable_notification": {
+#         "type": "O",
+#     }
+# }
+# param_list = list(params.keys())
+# service_name = "enable_money_counter_"  # Название тестируемого сервиса
+#
+# # Все возможные комбинации значений для данных параметров
+# combinations = list(itertools.product([x for x in range(len(values))], repeat=len(param_list)))
+# for test_num, combination in enumerate(combinations):
+#     test_name = "test_"
+#     test = {}
+#     # Значение параметров в данном тесте
+#     for param_index, param_name in enumerate(param_list):
+#         test.update({param_name: values[combination[param_index]]})
+#
+#     # Анализ удачен ли тест будет или нет, по заданным типам параметров (Mandatory, Optional, OptionalMandatory)
+#     # OptionalMandatory = 2 или более параметра опциональны, но один из них обязательно должен быть
+#     # !TODO: Анализ тестов по типам параметрам
+#     # !TODO: Откинуть бессмысленные тесты
+#     # if test[param_list[0]] == "incorrect" or test[param_list[1]] == "incorrect":
+#     #     test_name += "unable_to_"
+#     # elif test[param_list[2]] == "incorrect" or test[param_list[2]] == "empty":
+#     #     test_name += "unable_to_"
+#     # elif test[param_list[3]] == "incorrect":
+#     #     test_name += "unable_to_"
+#     test_name += service_name
+#
+#     # Собрать название теста
+#     for param_name in param_list:
+#         test_name += f"with_{test[param_name]}_{param_name}_"  # example: with_{incorrect}_{imsi}_
+#     test_name = test_name[:-1]  # убрать _ в конце
+#
+#     print(test_num, test_name)
 
-"""
-Сервис по работе со сим-картой
-
-        Блокировка (административная) карты
-        Блокировка (добровольная) карты
-        Разблокировка (административная) карты
-        Разблокировка (добровольная) карты
-        Получение базовой информации о карте
-        Получение информации о состоянии карты
-        Получение информации о состоянии карты без пин пак
-        Смена статуса номера
-        Изменение msisdn карты
-        Удаление списка карт
-        Изменение языка карты
-        Восстановление карты
-        Получение всех msisdn по imsi
-        Получение языка карты
-        Замена карты
-        Смена клиента
-        Удаление списка карт с расширенным результатом
-        Проверка HLR профиля
-        Смена состояния проверки карты
-        Перевод номера из отстоя
-        Получение данных по регистрации абонента на HLR
-        Изменение дополнительной информации на карте
-        Активация карты
-        Создание счетчика расходов по карте
-        Удаление счетчика расходов по карте
-        Просмотр состояния счетчиков расходов по карте
-        Получение списка неактивных карт
-        Переход номера к другому оператору
-        Получение информации о состоянии карты включая неоплаченные инвойсы
-
-
-"""

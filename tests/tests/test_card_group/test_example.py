@@ -23,7 +23,7 @@ class TestTearDown:
             new_cg_model = CardGroup(clientId=self.default_client.id,
                                      name=fake.name(),
                                      parentGroupId=parent_cg_model.id)
-            cg_model = clients.RPC.card_group.create(model=new_cg_model)
+            cg_model = clients.RPC.card_group.create(model=new_cg_model) #
             cg_model = get_result(cg_model, model=CardGroup)
         a = 1/0
         with allure.step('Delete parent cardgroup'):
@@ -32,5 +32,5 @@ class TestTearDown:
         with allure.step('Assert response is FK_CARDGROUP_PARENT'):
             assert response == FK_CARDGROUP_PARENT
         with allure.step('Teardown: delete created cardgroups'):
-            delete_cardgroup_from_db(cg_model.id)
-            delete_cardgroup_from_db(parent_cg_model.id)
+            delete_cardgroup_from_db(cg_model.id) #
+            delete_cardgroup_from_db(parent_cg_model.id) #

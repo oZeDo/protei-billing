@@ -21,5 +21,3 @@ class ReprExtension(object):
 
     def __items_to_values_list(self):
         return [f"{k} = {v}" for k, v in self.__dict__.items() if not k.startswith("_")]
-
-

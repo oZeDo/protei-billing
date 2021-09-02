@@ -7,7 +7,6 @@ fake = Fake()
 
 
 class CardGroupDBController(BaseDBController):
-    # !TODO: ID вместо модели
     def create(self, client_id) -> Cardgroup:
         new_cardgroup = Cardgroup(id=cardgroup_id_seq.next_value(),
                                   cg_name=fake.name(),
@@ -15,7 +14,6 @@ class CardGroupDBController(BaseDBController):
                                   client_id=client_id
                                   )
         self.session.add(new_cardgroup)
-        # self.session.commit_changes()
         self.session.commit()
         return new_cardgroup
 
@@ -27,6 +25,3 @@ class CardGroupDBController(BaseDBController):
     def delete(self, group_id) -> None:
         self.session.query(Cardgroup).filter(Cardgroup.id == group_id).delete()
         self.session.commit()
-
-    # def execute(self, statement, **kwargs):
-    #     return self.session.execute(statement, **kwargs)

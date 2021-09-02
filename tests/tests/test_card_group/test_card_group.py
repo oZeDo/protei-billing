@@ -80,7 +80,14 @@ class TestCreation:
             assert response == NOT_FOUND
 
     def test_unable_to_create_card_group_with_parent_group_id_of_another_client(self, clients):
-        new_client = self.client_generator()
+        currency, company = self.currency_generator(), self.company_generator()
+        print("\n\n"+"_"*96)
+        print(f"Компания:{company.id}, Валюта:{currency.id}")
+        vg = self.virtual_group_generator(company_id=company.id, currency_id=currency.id)
+        print("\n\n"+"_"*96)
+        print(vg.id)
+        new_client = self.client_generator(vg.id)
+        # new_client = self.default_client
         new_cg_model = CardGroup(clientId=new_client.id, name=fake.name(),
                                  parentGroupId=self.default_cardgroup.id)
         response = clients.RPC.card_group.create(model=new_cg_model)
