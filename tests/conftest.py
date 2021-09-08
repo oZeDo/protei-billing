@@ -10,15 +10,16 @@ from API.client.db import DBClient
 
 
 pytest_plugins = [
-    "tests.fixtures.cardgroup",
-    "tests.fixtures.client",
     "tests.fixtures.company",
     "tests.fixtures.currency",
     "tests.fixtures.virtual_group",
-    "tests.fixtures.accounting_file",
     "tests.fixtures.account",
+    "tests.fixtures.accounting_file",
+    "tests.fixtures.card_series",
     "tests.fixtures.base_card",
-    "tests.fixtures.card"
+    "tests.fixtures.card",
+    "tests.fixtures.cardgroup",
+    "tests.fixtures.client"
 ]
 
 fake = Fake()
@@ -111,8 +112,8 @@ def pytest_runtest_teardown():
 
 @pytest.fixture(autouse=True, scope="class")
 def setup_fixture(request, company_generator, currency_generator, virtual_group_generator, account_generator,
-                  accounting_file_generator, base_card_generator, card_generator, client_generator,
-                  cardgroup_generator):
+                  accounting_file_generator, card_series_generator, base_card_generator, card_generator,
+                  client_generator, cardgroup_generator):
     request.cls.company_generator = company_generator
     request.cls.default_company = company_generator()
 
@@ -130,6 +131,10 @@ def setup_fixture(request, company_generator, currency_generator, virtual_group_
     request.cls.accounting_file_generator = accounting_file_generator
     request.cls.default_accounting_file = accounting_file_generator(request.cls, request.cls.default_virtual_group.id,
                                                                     request.cls.default_currency.id)
+
+    request.cls.card_series_generator = card_series_generator
+    request.cls.default_card_series = card_series_generator(request.cls, request.cls.default_currency.id,
+                                                            request.cls.default_accounting_file.id)
 
     request.cls.base_card_generator = base_card_generator
     request.cls.default_base_card = base_card_generator(request.cls, request.cls.default_virtual_group.id,

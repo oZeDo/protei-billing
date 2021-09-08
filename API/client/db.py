@@ -9,6 +9,7 @@ from API.controller.db.VirtualGroup import VirtualGroupDBController
 from API.controller.db.AccountingFile import AccountingFileDBController
 from API.controller.db.Account import AccountDBController
 from API.controller.db.Basecard import BaseCardDBController
+from API.controller.db.CardSeries import CardSeriesDBController
 
 
 class DBClient:
@@ -16,7 +17,7 @@ class DBClient:
         """Database client, which provides access for all db controllers and methods.
 
         Args:
-            url (str): Database connection string (DSN). Exmaple format: {DRIVER}://{USER}:{PASSWORD}@{HOST}:{PORT}/{SID}
+            url (str): Database connection string (DSN). Example format: {DRIVER}://{USER}:{PASSWORD}@{HOST}:{PORT}/{SID}
             pool_size (int, optional): Number of connections to be maintained. Defaults to 5.
             max_overflow (int, optional): The maximum overflow size of the pool. Defaults to 5.
         """
@@ -32,3 +33,4 @@ class DBClient:
         self.accounting_file = AccountingFileDBController(url, pool_size, max_overflow)
         self.account = AccountDBController(url, pool_size, max_overflow)
         self.base_card = BaseCardDBController(url, pool_size, max_overflow)
+        self.card_series = CardSeriesDBController(url, pool_size, max_overflow)
