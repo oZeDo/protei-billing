@@ -201,6 +201,16 @@ class Long(BaseModelOperations):
     long: [int] = atr()
 
 
+@attr.s
+class BaseCard(BaseModelOperations):
+    id: int = atr(eq=False, converter=convert_to(int))
+    cardtype: int = atr(converter=convert_to(int))
+    vgroupid: int = atr(converter=convert_to(int))
+    accfileid: int = atr(converter=convert_to(int))
+    state: int = atr(converter=convert_to(int))
+    cardnumber: str = atr(default=fake.uuid4(), converter=str)
+
+
 if __name__ == "__main__":
     # test = Card()
     # a = NumberState(id=1, code="1")

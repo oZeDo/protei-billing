@@ -52,8 +52,9 @@ def xml_to_dict(xml):
 def get_result(__response, *, model):
     __response = xml_to_dict(__response.text)
     if __response.get("status") == "OK":
-        model = model.from_dict(__response['resultObject'])
-        return model
+        if __response.get('resultObject'):
+            model = model.from_dict(__response['resultObject'])
+            return model
     return __response
 
 

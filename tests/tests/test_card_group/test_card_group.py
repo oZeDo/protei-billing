@@ -88,6 +88,7 @@ class TestCreation:
         print(vg.id)
         new_client = self.client_generator(vg.id)
         # new_client = self.default_client
+
         new_cg_model = CardGroup(clientId=new_client.id, name=fake.name(),
                                  parentGroupId=self.default_cardgroup.id)
         response = clients.RPC.card_group.create(model=new_cg_model)

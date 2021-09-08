@@ -102,9 +102,9 @@ def pytest_runtest_teardown():
         yield
 
 
-# @pytest.fixture(scope="class")
+# @pytest.fixture(autouse=True, scope="class")
 # def clients(request):
-#     request.cls.DBClient = DBClient()
+#     request.cls.DBClient = DBClient("oracle+cx_oracle://pbill:sql@192.168.73.3:1521/orcl")
 #     request.cls.RPCClient = RPCClient()
 #     return request.cls
 
