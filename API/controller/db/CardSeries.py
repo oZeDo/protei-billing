@@ -9,7 +9,7 @@ fake = Fake()
 class CardSeriesDBController(BaseDBController):
     def create(self, currency_id, accounting_file_id, amount):
         new_card_series = Cardsery(id=card_series_id_seq.next_value(),
-                                   name=fake,
+                                   name=fake.safe_color_name(),
                                    cardamount=amount,
                                    cardtype=1,
                                    seriesprefix=fake.uuid4(),
