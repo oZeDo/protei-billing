@@ -9,7 +9,7 @@ fake = Fake()
 
 @pytest.fixture
 def nonexistent_base_card(clients):
-    return clients.DB.base_card.session.execute(card_series_id_seq)
+    return clients.DB.card_series.session.execute(card_series_id_seq)
 
 
 @pytest.yield_fixture(scope="class")
