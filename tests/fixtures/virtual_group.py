@@ -16,8 +16,6 @@ def virtual_group_generator(clients):
     _id = []
 
     def _get(_, company_id, currency_id, *args):
-        # print(a)  # <tests.tests.test_card_group.test_card_group.TestCreation object at 0x000002A2CD420C40>
-        print(f"Фикстура\nКомпания:{company_id}, Валюта:{currency_id}, {args}")
         new_virtual_group = clients.DB.virtual_group.create(company_id, currency_id)
         _id.append(new_virtual_group.id)
         return new_virtual_group
