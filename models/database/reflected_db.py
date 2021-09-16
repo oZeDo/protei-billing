@@ -1,8 +1,9 @@
 # coding: utf-8
-from sqlalchemy import CHAR, CheckConstraint, Column, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, LargeBinary, TIMESTAMP, Table, Text, VARCHAR, text
-from sqlalchemy.dialects.oracle import NUMBER
+from sqlalchemy import CHAR, CheckConstraint, Column, DateTime, Float, ForeignKey, ForeignKeyConstraint, Index, Integer, LargeBinary, TIMESTAMP, Table, Text, VARCHAR, text
+from sqlalchemy.dialects.oracle import NUMBER, RAW
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+
 from .repr_extension import ReprExtension
 
 Base = declarative_base(cls=ReprExtension)
@@ -15,63 +16,6 @@ class Accfilestate(Base):
     id = Column(NUMBER(asdecimal=False), primary_key=True)
     afs_code = Column(VARCHAR(32), nullable=False, unique=True)
     afs_info = Column(VARCHAR(1024))
-
-
-class Account(Base):
-    __tablename__ = 'account'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    contractid = Column(ForeignKey('contract.id', ondelete='CASCADE'), index=True)
-    client = Column(ForeignKey('client.id'), index=True)
-    acctype = Column(ForeignKey('accounttype.id'), nullable=False)
-    external_id = Column(VARCHAR(64), unique=True, server_default=text("NULL"))
-    appsubtype = Column(VARCHAR(32))
-    balance = Column(NUMBER(asdecimal=False), nullable=False)
-    limit = Column(NUMBER(asdecimal=False), nullable=False)
-    currency = Column(ForeignKey('currency.id'), nullable=False)
-    firsttr_date = Column(TIMESTAMP)
-    lasttr_date = Column(TIMESTAMP)
-    vgroupid = Column(ForeignKey('virtualgroup.id'), nullable=False, index=True)
-    last_charge_date = Column(TIMESTAMP)
-    stbalanceday = Column(NUMBER(asdecimal=False))
-    stbalancemonth = Column(NUMBER(asdecimal=False))
-    state_id = Column(ForeignKey('accountstate.id'), nullable=False)
-    last_recharge_date = Column(TIMESTAMP)
-    nextbillattempt = Column(DateTime, index=True)
-    lastbillattempt = Column(DateTime)
-    billing_mode = Column(NUMBER(asdecimal=False), nullable=False)
-    external_contract = Column(VARCHAR(125))
-    contract_date = Column(DateTime)
-    personal_manager = Column(VARCHAR(125))
-    spending_limit = Column(NUMBER(asdecimal=False))
-    limit_notify = Column(NUMBER(asdecimal=False))
-    last_activity_date = Column(DateTime)
-    change_version = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    without_lock = Column(NUMBER(asdecimal=False))
-    joint_state = Column(VARCHAR(600))
-    limit_shift = Column(NUMBER(asdecimal=False))
-
-    accounttype = relationship('Accounttype')
-    client1 = relationship('Client', primaryjoin='Account.client == Client.id')
-    contract = relationship('Contract')
-    currency1 = relationship('Currency')
-    state = relationship('Accountstate')
-    virtualgroup = relationship('Virtualgroup')
-
-
-class AccountMlt(Account):
-    __tablename__ = 'account_mlt'
-
-    id = Column(ForeignKey('account.id', ondelete='CASCADE'), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("current_date "))
-    init_card_id = Column(ForeignKey('basecard.id', ondelete='SET NULL'), index=True)
-    creator_login = Column(VARCHAR(128))
-    info = Column(VARCHAR(1000))
-    dealer_id = Column(ForeignKey('company.id'), index=True)
-
-    dealer = relationship('Company')
-    init_card = relationship('Basecard')
 
 
 class Accountingfile(Base):
@@ -126,6 +70,88 @@ class Auditeventtype(Base):
     event_info = Column(VARCHAR(1024))
 
 
+class BaseStation(Base):
+    __tablename__ = 'base_station'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    begin_time = Column(VARCHAR(32))
+    end_time = Column(VARCHAR(32))
+    station_type = Column(NUMBER(asdecimal=False))
+    address = Column(VARCHAR(512))
+    sector_type = Column(NUMBER(asdecimal=False))
+    lac = Column(NUMBER(asdecimal=False))
+    cell = Column(NUMBER(asdecimal=False))
+    cell_sign = Column(VARCHAR(128))
+    address_type_id = Column(NUMBER(asdecimal=False))
+    address_type = Column(NUMBER(asdecimal=False))
+    zip = Column(VARCHAR(32))
+    country = Column(VARCHAR(128))
+    region = Column(VARCHAR(128))
+    zone = Column(VARCHAR(128))
+    city = Column(VARCHAR(128))
+    street = Column(VARCHAR(128))
+    building = Column(VARCHAR(128))
+    build_sect = Column(VARCHAR(128))
+    apartment = Column(VARCHAR(128))
+    unstruct_info = Column(VARCHAR(1024))
+    latitude = Column(Float)
+    longitude = Column(Float)
+    projection_type = Column(NUMBER(asdecimal=False))
+    region_id = Column(NUMBER(asdecimal=False))
+
+
+class BaseStationAntenna(Base):
+    __tablename__ = 'base_station_antenna'
+
+    base_station_id = Column(NUMBER(asdecimal=False), primary_key=True)
+    antenna_type = Column(NUMBER(asdecimal=False))
+    azimut = Column(NUMBER(asdecimal=False))
+    width = Column(NUMBER(asdecimal=False))
+    horizon_angle = Column(NUMBER(asdecimal=False))
+    power = Column(NUMBER(asdecimal=False))
+    frequency_start = Column(NUMBER(asdecimal=False))
+    frequency_stop = Column(NUMBER(asdecimal=False))
+    leaf_level = Column(NUMBER(asdecimal=False))
+    vertical_lift = Column(NUMBER(asdecimal=False))
+    gain_factor = Column(NUMBER(asdecimal=False))
+    polarization = Column(NUMBER(asdecimal=False))
+    region_id = Column(NUMBER(asdecimal=False))
+
+
+t_basecard_bk = Table(
+    'basecard_bk', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('cardtype', NUMBER(asdecimal=False), nullable=False),
+    Column('vgroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('accfileid', NUMBER(asdecimal=False), nullable=False),
+    Column('created', DateTime, nullable=False),
+    Column('state', NUMBER(asdecimal=False), nullable=False),
+    Column('dealerid', NUMBER(asdecimal=False)),
+    Column('emitentid', NUMBER(asdecimal=False)),
+    Column('activefrom', DateTime),
+    Column('expired', DateTime),
+    Column('saled', DateTime),
+    Column('activated', DateTime),
+    Column('firsttransaction', DateTime),
+    Column('seriesid', NUMBER(asdecimal=False)),
+    Column('seriesnumber', NUMBER(asdecimal=False)),
+    Column('cardnumber', VARCHAR(64), nullable=False),
+    Column('batchid', NUMBER(asdecimal=False)),
+    Column('batchnumber', NUMBER(asdecimal=False)),
+    Column('lang', NUMBER(asdecimal=False)),
+    Column('info', VARCHAR(1024)),
+    Column('info2', VARCHAR(1024)),
+    Column('opstate', NUMBER(asdecimal=False)),
+    Column('opstatechangedate', DateTime),
+    Column('lastacfchangedate', DateTime),
+    Column('factsellerid', NUMBER(asdecimal=False)),
+    Column('shipped', DateTime),
+    Column('rechargentfsent', DateTime),
+    Column('shipmentuserid', NUMBER(asdecimal=False)),
+    Column('shipmentuserinfo', VARCHAR(200))
+)
+
+
 class Baseservicetype(Base):
     __tablename__ = 'baseservicetype'
     __table_args__ = {'comment': 'Основные типы сервисов (Голосовой вызов, SMS, GPRS, MMS, парковка)'}
@@ -166,7 +192,7 @@ t_billingparameters = Table(
     Column('varchar_value', VARCHAR(2048)),
     Column('clob_value', Text),
     Column('description', VARCHAR(512), server_default=text("NULL")),
-    Column('group_code', VARCHAR(32)),
+    Column('group_code', VARCHAR(32), nullable=False),
     Column('editor', VARCHAR(256)),
     Column('version', VARCHAR(256))
 )
@@ -229,6 +255,16 @@ class BsJobtask(Base):
     completion_info = Column(VARCHAR(2000))
 
 
+class CardFixedGeoLocation(Base):
+    __tablename__ = 'card_fixed_geo_location'
+
+    card_id = Column(NUMBER(asdecimal=False), primary_key=True)
+    lat = Column(NUMBER(asdecimal=False), nullable=False)
+    lon = Column(NUMBER(asdecimal=False), nullable=False)
+    record_date = Column(DateTime, nullable=False)
+    address = Column(VARCHAR(256))
+
+
 class Cardcheckstate(Base):
     __tablename__ = 'cardcheckstate'
 
@@ -260,56 +296,6 @@ class Cardtype(Base):
     info = Column(VARCHAR(1024))
 
 
-class Client(Base):
-    __tablename__ = 'client'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    clienttypeid = Column(ForeignKey('clienttype.id'), nullable=False)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    dname = Column(VARCHAR(200), nullable=False, index=True)
-    personid = Column(ForeignKey('personinfo.id', ondelete='SET NULL'))
-    passport = Column(VARCHAR(128), index=True)
-    regdoctypeid = Column(ForeignKey('client_regdoctype.id'))
-    regdoc_issued = Column(DateTime)
-    regdoc_issue_place = Column(VARCHAR(500))
-    bank_details = Column(VARCHAR(2000))
-    vgroupid = Column(ForeignKey('virtualgroup.id'), nullable=False)
-    regdoctype_info = Column(VARCHAR(256))
-    regdoc_series = Column(VARCHAR(16))
-    regdoc_number = Column(VARCHAR(32))
-    regaddress_json = Column(VARCHAR(4000))
-    dejureaddress_json = Column(VARCHAR(4000))
-    letter_of_attorney = Column(VARCHAR(256))
-    dname_up = Column(VARCHAR(200), index=True)
-    apptype = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    company_id = Column(ForeignKey('company.id'), index=True)
-    ntf_method = Column(VARCHAR(18), nullable=False, server_default=text("'sms' "))
-    assoc = Column(ForeignKey('client_association.id'))
-    primaccountid = Column(ForeignKey('account.id', ondelete='SET NULL'), index=True)
-    billmode_id = Column(ForeignKey('billingmode.id'), nullable=False)
-    external_id = Column(VARCHAR(64), unique=True, server_default=text("NULL"))
-    second_regdoctypeid = Column(ForeignKey('client_regdoctype.id'))
-    second_regdoctype_info = Column(VARCHAR(256))
-    second_regdoc_series = Column(VARCHAR(32))
-    second_regdoc_number = Column(VARCHAR(32))
-    second_regdoc_issued = Column(DateTime)
-    second_regdoc_expired = Column(DateTime)
-    maxageoflocation = Column(NUMBER(asdecimal=False))
-    ccomment = Column(VARCHAR(125))
-    cinfo = Column(VARCHAR(4000))
-    invoice_delivery_settings = Column(VARCHAR(128))
-
-    client_association = relationship('ClientAssociation')
-    billmode = relationship('Billingmode')
-    clienttype = relationship('Clienttype')
-    company = relationship('Company')
-    personinfo = relationship('Personinfo')
-    account = relationship('Account', primaryjoin='Client.primaccountid == Account.id')
-    client_regdoctype = relationship('ClientRegdoctype', primaryjoin='Client.regdoctypeid == ClientRegdoctype.id')
-    client_regdoctype1 = relationship('ClientRegdoctype', primaryjoin='Client.second_regdoctypeid == ClientRegdoctype.id')
-    virtualgroup = relationship('Virtualgroup')
-
-
 class ClientInvoice(Base):
     __tablename__ = 'client_invoice'
     __table_args__ = (
@@ -329,9 +315,10 @@ class ClientInvoice(Base):
     payoff_value = Column(NUMBER(asdecimal=False))
     documents_number = Column(NUMBER(asdecimal=False), server_default=text("0"))
     documents_created = Column(DateTime)
+    bill_service_data = Column(Text)
     paid_value = Column(NUMBER(asdecimal=False))
     closed = Column(DateTime)
-    bill_service_data = Column(Text)
+    recommended_payment_due = Column(DateTime)
 
 
 t_client_invoice_backup = Table(
@@ -371,6 +358,44 @@ class Clienttype(Base):
     cltypeinfo = Column(VARCHAR(2000))
 
 
+class Clientvehicle(Base):
+    __tablename__ = 'clientvehicle'
+    __table_args__ = (
+        Index('uq_clientvehicle', 'client_id', 'vehicle_number', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    client_id = Column(NUMBER(asdecimal=False), nullable=False)
+    vehicle_number = Column(VARCHAR(16), nullable=False)
+    info = Column(VARCHAR(1000))
+
+
+class Commutator(Base):
+    __tablename__ = 'commutators'
+
+    switch_id = Column(NUMBER(asdecimal=False), primary_key=True)
+    begin_time = Column(VARCHAR(64))
+    end_time = Column(VARCHAR(64))
+    description = Column(VARCHAR(256))
+    network_type = Column(NUMBER(asdecimal=False))
+    switch_type = Column(NUMBER(asdecimal=False))
+    address_type_id = Column(NUMBER(asdecimal=False))
+    address_type = Column(NUMBER(asdecimal=False))
+    zip = Column(VARCHAR(32))
+    country = Column(VARCHAR(128))
+    region = Column(VARCHAR(128))
+    zone = Column(VARCHAR(128))
+    city = Column(VARCHAR(128))
+    street = Column(VARCHAR(128))
+    building = Column(VARCHAR(128))
+    build_sect = Column(VARCHAR(128))
+    apartment = Column(VARCHAR(128))
+    unstruct_info = Column(VARCHAR(1024))
+    switch_sign = Column(VARCHAR(128))
+    region_id = Column(NUMBER(asdecimal=False))
+
+
 class Company(Base):
     __tablename__ = 'company'
 
@@ -396,6 +421,22 @@ class Companyrole(Base):
     roleinfo = Column(VARCHAR(1024))
 
 
+t_companystat = Table(
+    'companystat', metadata,
+    Column('record_date', DateTime, nullable=False),
+    Column('company_id', NUMBER(asdecimal=False), nullable=False),
+    Column('curr_code', VARCHAR(5)),
+    Column('billtotal', NUMBER(asdecimal=False)),
+    Column('billsms', NUMBER(asdecimal=False)),
+    Column('billvoice', NUMBER(asdecimal=False)),
+    Column('billtraffic', NUMBER(asdecimal=False)),
+    Column('sms_count', NUMBER(asdecimal=False)),
+    Column('traffic_total', NUMBER(asdecimal=False)),
+    Column('voice_total', NUMBER(asdecimal=False)),
+    Index('uq_company_stat', 'company_id', 'record_date', 'curr_code', unique=True)
+)
+
+
 class ConfigDef(Base):
     __tablename__ = 'config_defs'
 
@@ -403,31 +444,6 @@ class ConfigDef(Base):
     acfsendersmsaddr = Column(VARCHAR(256))
     acfsenderemailaddr = Column(VARCHAR(256))
     id = Column(NUMBER(asdecimal=False), primary_key=True, server_default=text("1 "))
-
-
-class Contract(Base):
-    __tablename__ = 'contract'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    signed = Column(DateTime)
-    expired = Column(DateTime)
-    contract_no = Column(VARCHAR(64), nullable=False, unique=True)
-    contract_info = Column(VARCHAR(2048))
-    contract_file = Column(LargeBinary)
-    contract_person = Column(VARCHAR(512))
-    signer = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
-    promotion_code = Column(VARCHAR(64))
-    contract_file_size = Column(NUMBER(asdecimal=False))
-    contract_type = Column(ForeignKey('contracttype.id'))
-    contract_file_name = Column(VARCHAR(256))
-    dealercompanyid = Column(ForeignKey('company.id'))
-    point_of_sale = Column(VARCHAR(200))
-    sellerlogin = Column(VARCHAR(64), index=True)
-
-    contracttype = relationship('Contracttype')
-    company = relationship('Company')
-    client = relationship('Client')
 
 
 class Contractsubject(Base):
@@ -470,12 +486,69 @@ class Daytype(Base):
     name = Column(VARCHAR(200), nullable=False)
 
 
+t_dbg = Table(
+    'dbg', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('s', VARCHAR(4000))
+)
+
+
+t_del_subs_28036 = Table(
+    'del_subs_28036', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('orderdate', DateTime, nullable=False),
+    Column('order_no', VARCHAR(32), nullable=False),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('order_cost', NUMBER(asdecimal=False), nullable=False),
+    Column('currencyid', NUMBER(asdecimal=False), nullable=False),
+    Column('startbilldate', DateTime),
+    Column('account_id', NUMBER(asdecimal=False), nullable=False),
+    Column('client_id', NUMBER(asdecimal=False)),
+    Column('targetdesc', VARCHAR(512)),
+    Column('payment_schema_id', NUMBER(asdecimal=False), nullable=False),
+    Column('nextbilldate', DateTime, nullable=False),
+    Column('lastbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('totalbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('lastbillattempt', DateTime),
+    Column('lastattempnumber', NUMBER(asdecimal=False)),
+    Column('nextbillattempt', DateTime, nullable=False),
+    Column('payruleid', NUMBER(asdecimal=False)),
+    Column('payrulestart', DateTime),
+    Column('state', NUMBER(asdecimal=False), nullable=False),
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('accfileid', NUMBER(asdecimal=False)),
+    Column('lastbilldate', DateTime),
+    Column('last_error', VARCHAR(64)),
+    Column('nextperiodcost', NUMBER(asdecimal=False)),
+    Column('provisioning', NUMBER(asdecimal=False), nullable=False),
+    Column('uservars', VARCHAR(4000))
+)
+
+
 class Departmentcode(Base):
     __tablename__ = 'departmentcode'
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
     code = Column(VARCHAR(64), nullable=False, unique=True)
     name = Column(VARCHAR(2000), nullable=False)
+
+
+class DocTemplateType(Base):
+    __tablename__ = 'doc_template_type'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    dtt_code = Column(VARCHAR(128), unique=True)
+    info = Column(VARCHAR(1024))
+
+
+t_dup_subs_28036 = Table(
+    'dup_subs_28036', metadata,
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('prodname', VARCHAR(256), nullable=False),
+    Column('ordcount', NUMBER(asdecimal=False)),
+    Column('stayid', NUMBER(asdecimal=False))
+)
 
 
 class EspRuruCatalog(Base):
@@ -509,6 +582,17 @@ class EspRuruConfig(Base):
     complete_msg = Column(VARCHAR(4000))
     inn = Column(VARCHAR(32))
     last_report_ts = Column(TIMESTAMP)
+
+
+t_esp_ruru_config2 = Table(
+    'esp_ruru_config2', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('confirm_text', VARCHAR(4000)),
+    Column('request_msg', VARCHAR(4000)),
+    Column('complete_msg', VARCHAR(4000)),
+    Column('inn', VARCHAR(32)),
+    Column('last_report_ts', TIMESTAMP)
+)
 
 
 class Fincorrtype(Base):
@@ -574,6 +658,14 @@ class GprsService(Base):
     ratinggroup = Column(VARCHAR(64), unique=True)
 
 
+t_grey_ip = Table(
+    'grey_ip', metadata,
+    Column('address', VARCHAR(64)),
+    Column('minip', NUMBER(asdecimal=False)),
+    Column('maxip', NUMBER(asdecimal=False))
+)
+
+
 class IcTfbundle(Base):
     __tablename__ = 'ic_tfbundle'
 
@@ -609,6 +701,14 @@ class IpGateway(Base):
     ipv6 = Column(VARCHAR(256))
     ip_port = Column(VARCHAR(8))
     region_id = Column(NUMBER(asdecimal=False))
+
+
+class IpLeaseState(Base):
+    __tablename__ = 'ip_lease_state'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    state_code = Column(VARCHAR(20), nullable=False)
+    state_info = Column(VARCHAR(100))
 
 
 class IpPlan(Base):
@@ -683,6 +783,433 @@ t_message_cdr = Table(
 )
 
 
+t_messagetemplate_20160712 = Table(
+    'messagetemplate_20160712', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('vgroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('statecode', VARCHAR(64), nullable=False),
+    Column('msgtempl', VARCHAR(4000)),
+    Column('immediatesend', NUMBER(asdecimal=False), nullable=False)
+)
+
+
+t_messagetemplate_tmp = Table(
+    'messagetemplate_tmp', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('vgroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('statecode', VARCHAR(64), nullable=False),
+    Column('msgtempl', VARCHAR(4000))
+)
+
+
+t_mlog__account = Table(
+    'mlog$_account', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.ACCOUNT'
+)
+
+
+t_mlog__accountingfile = Table(
+    'mlog$_accountingfile', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.ACCOUNTINGFILE'
+)
+
+
+t_mlog__auditeventtype = Table(
+    'mlog$_auditeventtype', metadata,
+    Column('event_type', VARCHAR(32)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.AUDITEVENTTYPE'
+)
+
+
+t_mlog__basecard = Table(
+    'mlog$_basecard', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.BASECARD'
+)
+
+
+t_mlog__baseservicetype = Table(
+    'mlog$_baseservicetype', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.BASESERVICETYPE'
+)
+
+
+t_mlog__billservice = Table(
+    'mlog$_billservice', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.BILLSERVICE'
+)
+
+
+t_mlog__billtrafficclass_pre = Table(
+    'mlog$_billtrafficclass_pre', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.BILLTRAFFICCLASS_PREFIX'
+)
+
+
+t_mlog__billvolume = Table(
+    'mlog$_billvolume', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.BILLVOLUME'
+)
+
+
+t_mlog__cardgroup = Table(
+    'mlog$_cardgroup', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.CARDGROUP'
+)
+
+
+t_mlog__cardgrouplink = Table(
+    'mlog$_cardgrouplink', metadata,
+    Column('card_id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.CARDGROUPLINK'
+)
+
+
+t_mlog__cardstate = Table(
+    'mlog$_cardstate', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.CARDSTATE'
+)
+
+
+t_mlog__client = Table(
+    'mlog$_client', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.CLIENT'
+)
+
+
+t_mlog__clienttype = Table(
+    'mlog$_clienttype', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.CLIENTTYPE'
+)
+
+
+t_mlog__company = Table(
+    'mlog$_company', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.COMPANY'
+)
+
+
+t_mlog__contract = Table(
+    'mlog$_contract', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.CONTRACT'
+)
+
+
+t_mlog__country = Table(
+    'mlog$_country', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.COUNTRY'
+)
+
+
+t_mlog__currency = Table(
+    'mlog$_currency', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.CURRENCY'
+)
+
+
+t_mlog__fincorrtype = Table(
+    'mlog$_fincorrtype', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.FINCORRTYPE'
+)
+
+
+t_mlog__ic_ob_schedule = Table(
+    'mlog$_ic_ob_schedule', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.IC_OB_SCHEDULE'
+)
+
+
+t_mlog__ic_operator = Table(
+    'mlog$_ic_operator', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.IC_OPERATOR'
+)
+
+
+t_mlog__ic_operconn = Table(
+    'mlog$_ic_operconn', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.IC_OPERCONN'
+)
+
+
+t_mlog__ic_tariff = Table(
+    'mlog$_ic_tariff', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.IC_TARIFF'
+)
+
+
+t_mlog__ic_tf_direction = Table(
+    'mlog$_ic_tf_direction', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.IC_TF_DIRECTION'
+)
+
+
+t_mlog__ic_tfbundle = Table(
+    'mlog$_ic_tfbundle', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.IC_TFBUNDLE'
+)
+
+
+t_mlog__measureunit = Table(
+    'mlog$_measureunit', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.MEASUREUNIT'
+)
+
+
+t_mlog__mnoperator = Table(
+    'mlog$_mnoperator', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.MNOPERATOR'
+)
+
+
+t_mlog__mvnohomeoperator = Table(
+    'mlog$_mvnohomeoperator', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.MVNOHOMEOPERATOR'
+)
+
+
+t_mlog__product = Table(
+    'mlog$_product', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.PRODUCT'
+)
+
+
+t_mlog__productpackage = Table(
+    'mlog$_productpackage', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.PRODUCTPACKAGE'
+)
+
+
+t_mlog__producttype = Table(
+    'mlog$_producttype', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.PRODUCTTYPE'
+)
+
+
+t_mlog__servicecommand = Table(
+    'mlog$_servicecommand', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.SERVICECOMMAND'
+)
+
+
+t_mlog__simcard = Table(
+    'mlog$_simcard', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.SIMCARD'
+)
+
+
+t_mlog__tariffplan = Table(
+    'mlog$_tariffplan', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.TARIFFPLAN'
+)
+
+
+t_mlog__virtualgroup = Table(
+    'mlog$_virtualgroup', metadata,
+    Column('id', NUMBER(asdecimal=False)),
+    Column('snaptime$$', DateTime),
+    Column('dmltype$$', VARCHAR(1)),
+    Column('old_new$$', VARCHAR(1)),
+    Column('change_vector$$', RAW),
+    Column('xid$$', NUMBER(asdecimal=False)),
+    comment='snapshot log for master table PBILL.VIRTUALGROUP'
+)
+
+
 class MobilePlan(Base):
     __tablename__ = 'mobile_plan'
 
@@ -743,12 +1270,59 @@ class Packagepaymode(Base):
     info = Column(VARCHAR(1024))
 
 
+class Parkbillcard(Base):
+    __tablename__ = 'parkbillcard'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    client_id = Column(NUMBER(asdecimal=False), nullable=False)
+    account_id = Column(NUMBER(asdecimal=False), nullable=False)
+    face_number = Column(VARCHAR(64), unique=True)
+    info = Column(VARCHAR(1000))
+    rec_code_assigned = Column(DateTime)
+
+
+class Parkbillzone(Base):
+    __tablename__ = 'parkbillzone'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    pzonename = Column(VARCHAR(200), nullable=False, unique=True)
+    pzoneinfo = Column(VARCHAR(1000))
+    defaultcost = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    defcurrencyid = Column(NUMBER(asdecimal=False))
+
+
+class Parkingabonement(Base):
+    __tablename__ = 'parkingabonement'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    client_id = Column(NUMBER(asdecimal=False), nullable=False)
+    regnum = Column(VARCHAR(32), nullable=False, unique=True)
+    vehicenum = Column(VARCHAR(16), nullable=False)
+    activefrom = Column(DateTime, nullable=False)
+    activetill = Column(DateTime, nullable=False)
+    period_id = Column(NUMBER(asdecimal=False), nullable=False)
+
+
 class Parkingtype(Base):
     __tablename__ = 'parkingtype'
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
     ptcode = Column(VARCHAR(32), nullable=False, unique=True)
     ptinfo = Column(VARCHAR(1000))
+
+
+class Parkomat(Base):
+    __tablename__ = 'parkomat'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    vgroupid = Column(NUMBER(asdecimal=False), nullable=False, index=True)
+    ptname = Column(VARCHAR(200), nullable=False)
+    ptinfo = Column(VARCHAR(1000))
+    geoaddress = Column(VARCHAR(500))
+    ipaddress = Column(VARCHAR(32), unique=True)
+    extid = Column(VARCHAR(32), unique=True)
+    paymethod = Column(VARCHAR(200))
 
 
 class Parkprivilegetype(Base):
@@ -828,7 +1402,7 @@ class Personinfo(Base):
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    firstname = Column(VARCHAR(256))
+    firstname = Column(VARCHAR(64))
     lastname = Column(VARCHAR(64))
     secondname = Column(VARCHAR(64))
     displayname = Column(VARCHAR(200), index=True)
@@ -888,6 +1462,21 @@ class PhoneSpecial(Base):
     region_id = Column(NUMBER(asdecimal=False))
 
 
+t_prod_pack_usage_rest = Table(
+    'prod_pack_usage_rest', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('subsid', NUMBER(asdecimal=False), nullable=False),
+    Column('packageid', NUMBER(asdecimal=False), nullable=False),
+    Column('corpitem', NUMBER(asdecimal=False), nullable=False),
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('usagestart', DateTime),
+    Column('usagevalue', NUMBER(asdecimal=False), nullable=False),
+    Column('lastusagereset', DateTime),
+    Column('totalvalue', NUMBER(asdecimal=False), nullable=False),
+    Column('usageresetnumber', NUMBER(asdecimal=False), nullable=False)
+)
+
+
 class Productactivationcodestate(Base):
     __tablename__ = 'productactivationcodestate'
 
@@ -896,9 +1485,39 @@ class Productactivationcodestate(Base):
     description = Column(VARCHAR(1000))
 
 
+t_productsubs_cardnull = Table(
+    'productsubs_cardnull', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('orderdate', DateTime, nullable=False),
+    Column('order_no', VARCHAR(32), nullable=False),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('order_cost', NUMBER(asdecimal=False), nullable=False),
+    Column('currencyid', NUMBER(asdecimal=False), nullable=False),
+    Column('startbilldate', DateTime),
+    Column('account_id', NUMBER(asdecimal=False), nullable=False),
+    Column('client_id', NUMBER(asdecimal=False)),
+    Column('targetdesc', VARCHAR(512)),
+    Column('payment_schema_id', NUMBER(asdecimal=False), nullable=False),
+    Column('nextbilldate', DateTime, nullable=False),
+    Column('lastbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('totalbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('lastattempnumber', NUMBER(asdecimal=False)),
+    Column('payruleid', NUMBER(asdecimal=False)),
+    Column('payrulestart', DateTime),
+    Column('state', NUMBER(asdecimal=False), nullable=False),
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('accfileid', NUMBER(asdecimal=False)),
+    Column('lastbilldate', DateTime),
+    Column('last_error', VARCHAR(64)),
+    Column('nextperiodcost', NUMBER(asdecimal=False)),
+    Column('provisioning', NUMBER(asdecimal=False), nullable=False),
+    Column('uservars', VARCHAR(4000))
+)
+
+
 t_productsubscription_ob42_back = Table(
     'productsubscription_ob42_back', metadata,
-    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('id', NUMBER(asdecimal=False), nullable=False, index=True),
     Column('orderdate', DateTime, nullable=False),
     Column('order_no', VARCHAR(32), nullable=False),
     Column('product_id', NUMBER(asdecimal=False), nullable=False),
@@ -928,6 +1547,36 @@ t_productsubscription_ob42_back = Table(
 )
 
 
+t_productsubscription_restore = Table(
+    'productsubscription_restore', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('orderdate', DateTime, nullable=False),
+    Column('order_no', VARCHAR(32), nullable=False),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('order_cost', NUMBER(asdecimal=False), nullable=False),
+    Column('currencyid', NUMBER(asdecimal=False), nullable=False),
+    Column('startbilldate', DateTime),
+    Column('account_id', NUMBER(asdecimal=False), nullable=False),
+    Column('client_id', NUMBER(asdecimal=False)),
+    Column('targetdesc', VARCHAR(512)),
+    Column('payment_schema_id', NUMBER(asdecimal=False), nullable=False),
+    Column('nextbilldate', DateTime, nullable=False),
+    Column('lastbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('totalbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('lastattempnumber', NUMBER(asdecimal=False)),
+    Column('payruleid', NUMBER(asdecimal=False)),
+    Column('payrulestart', DateTime),
+    Column('state', NUMBER(asdecimal=False), nullable=False),
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('accfileid', NUMBER(asdecimal=False)),
+    Column('lastbilldate', DateTime),
+    Column('last_error', VARCHAR(64)),
+    Column('nextperiodcost', NUMBER(asdecimal=False)),
+    Column('provisioning', NUMBER(asdecimal=False), nullable=False),
+    Column('uservars', VARCHAR(4000))
+)
+
+
 class Productsubsstate(Base):
     __tablename__ = 'productsubsstate'
 
@@ -944,11 +1593,52 @@ class Producttype(Base):
     prodtypeinfo = Column(VARCHAR(4000))
 
 
+t_q = Table(
+    'q', metadata,
+    Column('s1', NUMBER(asdecimal=False)),
+    Column('msisdn', NUMBER(asdecimal=False)),
+    Column('user_name', VARCHAR(200)),
+    Column('internal_number', VARCHAR(200))
+)
+
+
+class Qosp(Base):
+    __tablename__ = 'qosp'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    uspeed = Column(NUMBER(asdecimal=False), nullable=False)
+    dspeed = Column(NUMBER(asdecimal=False), nullable=False)
+    classid = Column(NUMBER(asdecimal=False), server_default=text("1"))
+    name = Column(VARCHAR(128))
+
+
+class Region(Base):
+    __tablename__ = 'regions'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    begin_time = Column(VARCHAR(64))
+    end_time = Column(VARCHAR(64))
+    description = Column(VARCHAR(256))
+    mcc = Column(VARCHAR(32))
+    mnc = Column(VARCHAR(32))
+
+
 class Risklevel(Base):
     __tablename__ = 'risklevel'
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
     lvl = Column(VARCHAR(100), nullable=False, unique=True)
+
+
+class RoamOperator(Base):
+    __tablename__ = 'roam_operator'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    roaming_code = Column(VARCHAR(32))
+    begin_time = Column(VARCHAR(64))
+    end_time = Column(VARCHAR(64))
+    description = Column(VARCHAR(256))
+    region_id = Column(NUMBER(asdecimal=False))
 
 
 class Routeschema(Base):
@@ -1007,8 +1697,8 @@ class Sendermessage(Base):
     validity_time = Column(TIMESTAMP)
     subject_message = Column(VARCHAR(255))
     http_headers = Column(VARCHAR(2000))
-    params = Column(VARCHAR(500))
     schedule = Column(VARCHAR(100))
+    params = Column(VARCHAR(500))
 
 
 class Servicecommand(Base):
@@ -1019,6 +1709,7 @@ class Servicecommand(Base):
     required_tags = Column(VARCHAR(512))
     info = Column(VARCHAR(1024))
     message_tags = Column(VARCHAR(512))
+    optional_tags = Column(VARCHAR(512))
 
 
 class Simnumberstate(Base):
@@ -1034,6 +1725,190 @@ class Simnumbertype(Base):
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
     numtype = Column(VARCHAR(32), nullable=False, unique=True)
+
+
+class Smscommand(Base):
+    __tablename__ = 'smscommand'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    command = Column(VARCHAR(128), nullable=False)
+    info = Column(VARCHAR(256))
+    client_id = Column(NUMBER(asdecimal=False), nullable=False)
+
+
+t_stat_client_cards = Table(
+    'stat_client_cards', metadata,
+    Column('dt', DateTime),
+    Column('client_id', NUMBER(asdecimal=False), index=True),
+    Column('all_card', NUMBER(asdecimal=False)),
+    Column('dealer_card', NUMBER(asdecimal=False)),
+    Column('act_plus_finblock', NUMBER(asdecimal=False)),
+    Column('activated_beg', NUMBER(asdecimal=False)),
+    Column('activated_end', NUMBER(asdecimal=False)),
+    Column('activated_new', NUMBER(asdecimal=False)),
+    Column('admin_plus_finblock', NUMBER(asdecimal=False)),
+    Column('card_whiteip', NUMBER(asdecimal=False)),
+    Column('card_greyip', NUMBER(asdecimal=False)),
+    Column('card_actgreyip', NUMBER(asdecimal=False)),
+    Column('account_id', NUMBER(asdecimal=False), unique=True),
+    Index('uq_stat_client_cards', 'dt', 'client_id', 'account_id', unique=True)
+)
+
+
+t_tariffbindcall_old = Table(
+    'tariffbindcall_old', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('planscheduleid', NUMBER(asdecimal=False), nullable=False),
+    Column('locid', NUMBER(asdecimal=False), nullable=False),
+    Column('bzoneid', NUMBER(asdecimal=False), nullable=False),
+    Column('calldirection', NUMBER(asdecimal=False), nullable=False),
+    Column('modrulea', VARCHAR(64)),
+    Column('modruleb', VARCHAR(64)),
+    Column('tariffid', NUMBER(asdecimal=False), nullable=False)
+)
+
+
+t_tariffbindgprs_old = Table(
+    'tariffbindgprs_old', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('planscheduleid', NUMBER(asdecimal=False), nullable=False),
+    Column('accpointid', NUMBER(asdecimal=False), nullable=False),
+    Column('operatorid', NUMBER(asdecimal=False), nullable=False),
+    Column('sgsngroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('tariffid', NUMBER(asdecimal=False), nullable=False)
+)
+
+
+class Tariffbindparking(Base):
+    __tablename__ = 'tariffbindparking'
+    __table_args__ = (
+        Index('uq_tariffbindparking', 'planscheduleid', 'parkzoneid', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    planscheduleid = Column(NUMBER(asdecimal=False), nullable=False)
+    parkzoneid = Column(NUMBER(asdecimal=False), nullable=False)
+    tariffid = Column(NUMBER(asdecimal=False), nullable=False, index=True)
+
+
+t_tariffbindsms_old = Table(
+    'tariffbindsms_old', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('planschedid', NUMBER(asdecimal=False), nullable=False),
+    Column('locid', NUMBER(asdecimal=False), nullable=False),
+    Column('bzoneid', NUMBER(asdecimal=False), nullable=False),
+    Column('inbound', NUMBER(asdecimal=False), nullable=False),
+    Column('tariffid', NUMBER(asdecimal=False), nullable=False)
+)
+
+
+class Taskqueue(Base):
+    __tablename__ = 'taskqueue'
+    __table_args__ = (
+        Index('uq_taskqueue_ext_id', 'type_id', 'external_id', unique=True),
+        Index('ix_taskqueue', 'next_try', 'type_id')
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    external_id = Column(VARCHAR(128), nullable=False)
+    type_id = Column(NUMBER(asdecimal=False), nullable=False)
+    last_error = Column(VARCHAR(256))
+    attempt_count = Column(NUMBER(asdecimal=False))
+    next_try = Column(DateTime, nullable=False)
+    params = Column(VARCHAR(512))
+
+
+class Tax(Base):
+    __tablename__ = 'tax'
+    __table_args__ = (
+        Index('uq_tax', 'vgroup_id', 'active_from', 'client_id', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    vgroup_id = Column(NUMBER(asdecimal=False), nullable=False)
+    client_id = Column(NUMBER(asdecimal=False))
+    active_from = Column(DateTime, nullable=False)
+    active_till = Column(DateTime)
+    name = Column(VARCHAR(200), nullable=False)
+    description = Column(VARCHAR(1000))
+    rules = Column(VARCHAR(2000), nullable=False)
+
+
+t_tblfromlogminer = Table(
+    'tblfromlogminer', metadata,
+    Column('scn', NUMBER(asdecimal=False)),
+    Column('start_scn', NUMBER(asdecimal=False)),
+    Column('commit_scn', NUMBER(asdecimal=False)),
+    Column('timestamp', DateTime),
+    Column('start_timestamp', DateTime),
+    Column('commit_timestamp', DateTime),
+    Column('xidusn', NUMBER(asdecimal=False)),
+    Column('xidslt', NUMBER(asdecimal=False)),
+    Column('xidsqn', NUMBER(asdecimal=False)),
+    Column('xid', RAW),
+    Column('pxidusn', NUMBER(asdecimal=False)),
+    Column('pxidslt', NUMBER(asdecimal=False)),
+    Column('pxidsqn', NUMBER(asdecimal=False)),
+    Column('pxid', RAW),
+    Column('tx_name', VARCHAR(256)),
+    Column('operation', VARCHAR(32)),
+    Column('operation_code', NUMBER(asdecimal=False)),
+    Column('rollback', NUMBER(asdecimal=False)),
+    Column('seg_owner', VARCHAR(32)),
+    Column('seg_name', VARCHAR(256)),
+    Column('table_name', VARCHAR(32)),
+    Column('seg_type', NUMBER(asdecimal=False)),
+    Column('seg_type_name', VARCHAR(32)),
+    Column('table_space', VARCHAR(32)),
+    Column('row_id', VARCHAR(18)),
+    Column('username', VARCHAR(30)),
+    Column('os_username', VARCHAR(4000)),
+    Column('machine_name', VARCHAR(4000)),
+    Column('audit_sessionid', NUMBER(asdecimal=False)),
+    Column('SESSION#', NUMBER(asdecimal=False)),
+    Column('SERIAL#', NUMBER(asdecimal=False)),
+    Column('session_info', VARCHAR(4000)),
+    Column('THREAD#', NUMBER(asdecimal=False)),
+    Column('SEQUENCE#', NUMBER(asdecimal=False)),
+    Column('rbasqn', NUMBER(asdecimal=False)),
+    Column('rbablk', NUMBER(asdecimal=False)),
+    Column('rbabyte', NUMBER(asdecimal=False)),
+    Column('ubafil', NUMBER(asdecimal=False)),
+    Column('ubablk', NUMBER(asdecimal=False)),
+    Column('ubarec', NUMBER(asdecimal=False)),
+    Column('ubasqn', NUMBER(asdecimal=False)),
+    Column('ABS_FILE#', NUMBER(asdecimal=False)),
+    Column('REL_FILE#', NUMBER(asdecimal=False)),
+    Column('DATA_BLK#', NUMBER(asdecimal=False)),
+    Column('DATA_OBJ#', NUMBER(asdecimal=False)),
+    Column('DATA_OBJV#', NUMBER(asdecimal=False)),
+    Column('DATA_OBJD#', NUMBER(asdecimal=False)),
+    Column('sql_redo', VARCHAR(4000)),
+    Column('sql_undo', VARCHAR(4000)),
+    Column('rs_id', VARCHAR(32)),
+    Column('ssn', NUMBER(asdecimal=False)),
+    Column('csf', NUMBER(asdecimal=False)),
+    Column('info', VARCHAR(32)),
+    Column('status', NUMBER(asdecimal=False)),
+    Column('redo_value', NUMBER(asdecimal=False)),
+    Column('undo_value', NUMBER(asdecimal=False)),
+    Column('safe_resume_scn', NUMBER(asdecimal=False)),
+    Column('cscn', NUMBER(asdecimal=False)),
+    Column('object_id', RAW),
+    Column('edition_name', VARCHAR(30)),
+    Column('client_id', VARCHAR(64))
+)
+
+
+class TerminationType(Base):
+    __tablename__ = 'termination_type'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    begin_time = Column(VARCHAR(64))
+    end_time = Column(VARCHAR(64))
+    description = Column(VARCHAR(256))
+    network_type = Column(NUMBER(asdecimal=False))
+    region_id = Column(NUMBER(asdecimal=False))
 
 
 class Timeunit(Base):
@@ -1083,6 +1958,110 @@ class TmReportfile(Base):
     filesize = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
 
 
+t_tmp_dup_subsc_201706_bk = Table(
+    'tmp_dup_subsc_201706_bk', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('orderdate', DateTime, nullable=False),
+    Column('order_no', VARCHAR(32), nullable=False),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('order_cost', NUMBER(asdecimal=False), nullable=False),
+    Column('currencyid', NUMBER(asdecimal=False), nullable=False),
+    Column('startbilldate', DateTime),
+    Column('account_id', NUMBER(asdecimal=False), nullable=False),
+    Column('client_id', NUMBER(asdecimal=False)),
+    Column('targetdesc', VARCHAR(512)),
+    Column('payment_schema_id', NUMBER(asdecimal=False), nullable=False),
+    Column('nextbilldate', DateTime, nullable=False),
+    Column('lastbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('totalbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('lastattempnumber', NUMBER(asdecimal=False)),
+    Column('payruleid', NUMBER(asdecimal=False)),
+    Column('payrulestart', DateTime),
+    Column('state', NUMBER(asdecimal=False), nullable=False),
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('accfileid', NUMBER(asdecimal=False)),
+    Column('lastbilldate', DateTime),
+    Column('last_error', VARCHAR(64)),
+    Column('nextperiodcost', NUMBER(asdecimal=False)),
+    Column('provisioning', NUMBER(asdecimal=False), nullable=False),
+    Column('uservars', VARCHAR(4000))
+)
+
+
+t_tmp_dup_subsc_201706_bk_2 = Table(
+    'tmp_dup_subsc_201706_bk_2', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('orderdate', DateTime, nullable=False),
+    Column('order_no', VARCHAR(32), nullable=False),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('order_cost', NUMBER(asdecimal=False), nullable=False),
+    Column('currencyid', NUMBER(asdecimal=False), nullable=False),
+    Column('startbilldate', DateTime),
+    Column('account_id', NUMBER(asdecimal=False), nullable=False),
+    Column('client_id', NUMBER(asdecimal=False)),
+    Column('targetdesc', VARCHAR(512)),
+    Column('payment_schema_id', NUMBER(asdecimal=False), nullable=False),
+    Column('nextbilldate', DateTime, nullable=False),
+    Column('lastbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('totalbillamount', NUMBER(asdecimal=False), nullable=False),
+    Column('lastattempnumber', NUMBER(asdecimal=False)),
+    Column('payruleid', NUMBER(asdecimal=False)),
+    Column('payrulestart', DateTime),
+    Column('state', NUMBER(asdecimal=False), nullable=False),
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('accfileid', NUMBER(asdecimal=False)),
+    Column('lastbilldate', DateTime),
+    Column('last_error', VARCHAR(64)),
+    Column('nextperiodcost', NUMBER(asdecimal=False)),
+    Column('provisioning', NUMBER(asdecimal=False), nullable=False),
+    Column('uservars', VARCHAR(4000))
+)
+
+
+t_tmp_duplicated_subs_201706 = Table(
+    'tmp_duplicated_subs_201706', metadata,
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('msisdn', VARCHAR(32)),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('prodname', VARCHAR(256), nullable=False),
+    Column('subscount', NUMBER(asdecimal=False)),
+    Column('maxorderdate', DateTime),
+    Column('minorderdate', DateTime),
+    Column('maxsubsid', NUMBER(asdecimal=False))
+)
+
+
+t_tmp_duplicated_subs_201706_2 = Table(
+    'tmp_duplicated_subs_201706_2', metadata,
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('msisdn', VARCHAR(32)),
+    Column('product_id', NUMBER(asdecimal=False), nullable=False),
+    Column('prodname', VARCHAR(256), nullable=False),
+    Column('subscount', NUMBER(asdecimal=False)),
+    Column('maxorderdate', DateTime),
+    Column('minorderdate', DateTime),
+    Column('maxsubsid', NUMBER(asdecimal=False))
+)
+
+
+t_tmp_loc_dup_prefix = Table(
+    'tmp_loc_dup_prefix', metadata,
+    Column('locsize', NUMBER(asdecimal=False)),
+    Column('vlrprefix', VARCHAR(32), nullable=False),
+    Column('prefixnumber', NUMBER(asdecimal=False)),
+    Column('recid', NUMBER(asdecimal=False)),
+    Column('afflocid', NUMBER(asdecimal=False)),
+    Column('affvlrid', NUMBER(asdecimal=False))
+)
+
+
+t_tmp_missed_subs = Table(
+    'tmp_missed_subs', metadata,
+    Column('subscription_id', NUMBER(asdecimal=False)),
+    Column('id', NUMBER(asdecimal=False))
+)
+
+
 t_tmp_ob443_op = Table(
     'tmp_ob443_op', metadata,
     Column('operatorid', NUMBER(asdecimal=False), nullable=False),
@@ -1101,6 +2080,12 @@ t_tmp_patch_f16974 = Table(
     'tmp_patch_f16974', metadata,
     Column('planid', NUMBER(asdecimal=False), nullable=False),
     Column('destvgroup', NUMBER(asdecimal=False))
+)
+
+
+t_tmp_perehod_mnp = Table(
+    'tmp_perehod_mnp', metadata,
+    Column('pnumber', VARCHAR(32), nullable=False)
 )
 
 
@@ -1129,19 +2114,6 @@ class Userrole(Base):
     ca_role_account = Column(VARCHAR(64))
     ca_role_pwd = Column(VARCHAR(128))
     requiretargetcompany = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-
-
-t_v_qosp = Table(
-    'v_qosp', metadata,
-    Column('id', NUMBER(asdecimal=False), nullable=False),
-    Column('code', VARCHAR(32), nullable=False),
-    Column('servicetype', NUMBER(asdecimal=False)),
-    Column('name', VARCHAR(128), nullable=False),
-    Column('extid', VARCHAR(32), nullable=False),
-    Column('classid', NUMBER(asdecimal=False)),
-    Column('dspeed', NUMBER(asdecimal=False), nullable=False),
-    Column('uspeed', NUMBER(asdecimal=False), nullable=False)
-)
 
 
 class VadService(Base):
@@ -1243,7 +2215,7 @@ t_view_account = Table(
     Column('external_id', VARCHAR(64)),
     Column('appsubtype', VARCHAR(32)),
     Column('balance', NUMBER(asdecimal=False), nullable=False),
-    Column('limit', NUMBER(asdecimal=False), nullable=False),
+    Column('nlimit', NUMBER(asdecimal=False), nullable=False),
     Column('currency', NUMBER(asdecimal=False), nullable=False),
     Column('firsttr_date', TIMESTAMP),
     Column('lasttr_date', TIMESTAMP),
@@ -1262,8 +2234,8 @@ t_view_account = Table(
     Column('spending_limit', NUMBER(asdecimal=False)),
     Column('limit_notify', NUMBER(asdecimal=False)),
     Column('last_activity_date', DateTime),
-    Column('change_version', NUMBER(asdecimal=False), nullable=False),
-    Column('without_lock', NUMBER(asdecimal=False)),
+    Column('without_lock', NUMBER(asdecimal=False), nullable=False),
+    Column('change_version', NUMBER(asdecimal=False)),
     Column('joint_state', VARCHAR(600)),
     Column('limit_shift', NUMBER(asdecimal=False)),
     Column('currcode', VARCHAR(3), nullable=False),
@@ -1279,7 +2251,7 @@ t_view_account_mlt = Table(
     Column('account_id', NUMBER(asdecimal=False), nullable=False),
     Column('acctype', NUMBER(asdecimal=False), nullable=False),
     Column('balance', NUMBER(asdecimal=False), nullable=False),
-    Column('limit', NUMBER(asdecimal=False), nullable=False),
+    Column('nlimit', NUMBER(asdecimal=False), nullable=False),
     Column('client_id', NUMBER(asdecimal=False)),
     Column('currency_id', NUMBER(asdecimal=False), nullable=False),
     Column('last_charge_date', TIMESTAMP),
@@ -1301,7 +2273,7 @@ t_view_account_mlt_sim = Table(
     Column('account_id', NUMBER(asdecimal=False), nullable=False),
     Column('madealerid', NUMBER(asdecimal=False)),
     Column('balance', NUMBER(asdecimal=False), nullable=False),
-    Column('limit', NUMBER(asdecimal=False), nullable=False),
+    Column('nlimit', NUMBER(asdecimal=False), nullable=False),
     Column('client_id', NUMBER(asdecimal=False)),
     Column('currency_id', NUMBER(asdecimal=False), nullable=False),
     Column('last_charge_date', TIMESTAMP),
@@ -1401,8 +2373,10 @@ t_view_cells = Table(
     Column('cellsetid', NUMBER(asdecimal=False), nullable=False),
     Column('lac', NUMBER(asdecimal=False), nullable=False),
     Column('cellid', NUMBER(asdecimal=False), nullable=False),
+    Column('operid', NUMBER(asdecimal=False)),
     Column('csname', VARCHAR(200), nullable=False),
-    Column('csinfo', VARCHAR(2000))
+    Column('csinfo', VARCHAR(2000)),
+    Column('opname', VARCHAR(200))
 )
 
 
@@ -1439,12 +2413,14 @@ t_view_client = Table(
     Column('second_regdoc_number', VARCHAR(32)),
     Column('second_regdoc_issued', DateTime),
     Column('second_regdoc_expired', DateTime),
+    Column('regdoc_expired', DateTime),
     Column('maxageoflocation', NUMBER(asdecimal=False)),
     Column('ccomment', VARCHAR(125)),
     Column('cinfo', VARCHAR(4000)),
     Column('invoice_delivery_settings', VARCHAR(128)),
     Column('bill_mode_name', VARCHAR(16), nullable=False),
     Column('cltypeinfo', VARCHAR(2000)),
+    Column('cltypename', VARCHAR(128), nullable=False),
     Column('isprepaid', NUMBER(asdecimal=False)),
     Column('regdoctypename', VARCHAR(256)),
     Column('vgroupname', VARCHAR(200), nullable=False),
@@ -1501,7 +2477,8 @@ t_view_client_invoice = Table(
     Column('documents_number', NUMBER(asdecimal=False)),
     Column('documents_created', DateTime),
     Column('paid_value', NUMBER(asdecimal=False)),
-    Column('closed', DateTime)
+    Column('closed', DateTime),
+    Column('recommended_payment_due', DateTime)
 )
 
 
@@ -1554,14 +2531,16 @@ t_view_companies = Table(
     Column('website', VARCHAR(256)),
     Column('dejureaddress', VARCHAR(2000)),
     Column('comp_code', VARCHAR(256), nullable=False),
-    Column('comproles', VARCHAR(4000))
+    Column('comproles', VARCHAR(4000)),
+    Column('comprolesname', VARCHAR(4000))
 )
 
 
 t_view_comproles_agg = Table(
     'view_comproles_agg', metadata,
     Column('companyid', NUMBER(asdecimal=False), nullable=False),
-    Column('comproles', VARCHAR(4000))
+    Column('comproles', VARCHAR(4000)),
+    Column('comprolesname', VARCHAR(4000))
 )
 
 
@@ -1599,6 +2578,21 @@ t_view_discountautoorder = Table(
 )
 
 
+t_view_doc_template = Table(
+    'view_doc_template', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('name', VARCHAR(64)),
+    Column('type_id', NUMBER(asdecimal=False), nullable=False),
+    Column('vgroup_id', NUMBER(asdecimal=False), nullable=False),
+    Column('info', VARCHAR(256)),
+    Column('file_name', VARCHAR(1024)),
+    Column('file_size', NUMBER(asdecimal=False)),
+    Column('file_last_update', TIMESTAMP),
+    Column('file_content_type', VARCHAR(1024)),
+    Column('dtt_code', VARCHAR(128))
+)
+
+
 t_view_drep_anonymous_cards = Table(
     'view_drep_anonymous_cards', metadata,
     Column('shipped', DateTime),
@@ -1616,6 +2610,7 @@ t_view_drep_registered_cards = Table(
     Column('shipped', DateTime),
     Column('regdate', DateTime, nullable=False),
     Column('clientname', VARCHAR(200), nullable=False),
+    Column('clienttypeid', NUMBER(asdecimal=False), nullable=False),
     Column('contract_no', VARCHAR(64), nullable=False),
     Column('msisdn', VARCHAR(32)),
     Column('d_msisdn', VARCHAR(32)),
@@ -1654,7 +2649,105 @@ t_view_drep_waiting_cards = Table(
     Column('d_msisdn', VARCHAR(32)),
     Column('iccid', VARCHAR(32), nullable=False),
     Column('acfname', VARCHAR(128), nullable=False),
-    Column('dealerid', NUMBER(asdecimal=False))
+    Column('dealerid', NUMBER(asdecimal=False)),
+    Column('dealercompany', VARCHAR(256)),
+    Column('startbalance', NUMBER(asdecimal=False))
+)
+
+
+t_view_export_abonent = Table(
+    'view_export_abonent', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('vgroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('primaccountid', NUMBER(asdecimal=False)),
+    Column('created', DateTime, nullable=False),
+    Column('expired', DateTime),
+    Column('clienttypeid', NUMBER(asdecimal=False), nullable=False),
+    Column('dname', VARCHAR(200), nullable=False),
+    Column('dob', DateTime),
+    Column('passport', VARCHAR(128)),
+    Column('regdoctypeid', NUMBER(asdecimal=False)),
+    Column('regdoc_series', VARCHAR(16)),
+    Column('regdoc_number', VARCHAR(32)),
+    Column('regdoc_issue_place', VARCHAR(500)),
+    Column('bank_details', VARCHAR(2000)),
+    Column('displayname', VARCHAR(200)),
+    Column('external_id', VARCHAR(64)),
+    Column('signer', NUMBER(asdecimal=False)),
+    Column('contract_no', VARCHAR(64), nullable=False),
+    Column('signed', DateTime),
+    Column('active_sim_cards_count', NUMBER(asdecimal=False))
+)
+
+
+t_view_export_abonent_address = Table(
+    'view_export_abonent_address', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('clienttypeid', NUMBER(asdecimal=False), nullable=False),
+    Column('created', DateTime, nullable=False),
+    Column('dname', VARCHAR(200), nullable=False),
+    Column('personid', NUMBER(asdecimal=False)),
+    Column('passport', VARCHAR(128)),
+    Column('regdoctypeid', NUMBER(asdecimal=False)),
+    Column('regdoc_issued', DateTime),
+    Column('regdoc_issue_place', VARCHAR(500)),
+    Column('bank_details', VARCHAR(2000)),
+    Column('vgroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('regdoctype_info', VARCHAR(256)),
+    Column('regdoc_series', VARCHAR(16)),
+    Column('regdoc_number', VARCHAR(32)),
+    Column('regaddress_json', VARCHAR(4000)),
+    Column('dejureaddress_json', VARCHAR(4000)),
+    Column('letter_of_attorney', VARCHAR(256)),
+    Column('dname_up', VARCHAR(200)),
+    Column('apptype', NUMBER(asdecimal=False), nullable=False),
+    Column('company_id', NUMBER(asdecimal=False)),
+    Column('ntf_method', VARCHAR(18), nullable=False),
+    Column('assoc', NUMBER(asdecimal=False)),
+    Column('primaccountid', NUMBER(asdecimal=False)),
+    Column('billmode_id', NUMBER(asdecimal=False), nullable=False),
+    Column('external_id', VARCHAR(64)),
+    Column('second_regdoctypeid', NUMBER(asdecimal=False)),
+    Column('second_regdoctype_info', VARCHAR(256)),
+    Column('second_regdoc_series', VARCHAR(32)),
+    Column('second_regdoc_number', VARCHAR(32)),
+    Column('second_regdoc_issued', DateTime),
+    Column('second_regdoc_expired', DateTime),
+    Column('regdoc_expired', DateTime),
+    Column('maxageoflocation', NUMBER(asdecimal=False)),
+    Column('client', NUMBER(asdecimal=False)),
+    Column('active_sim_cards_count', NUMBER(asdecimal=False))
+)
+
+
+t_view_export_abonent_ident = Table(
+    'view_export_abonent_ident', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('client', NUMBER(asdecimal=False)),
+    Column('vgroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('msisdn', VARCHAR(32)),
+    Column('imsi', VARCHAR(64), nullable=False),
+    Column('imei', VARCHAR(32)),
+    Column('iccid', VARCHAR(32), nullable=False),
+    Column('activated', DateTime),
+    Column('expired', DateTime),
+    Column('opstate', NUMBER(asdecimal=False)),
+    Column('contract', NUMBER(asdecimal=False))
+)
+
+
+t_view_export_abonent_service = Table(
+    'view_export_abonent_service', metadata,
+    Column('client_id', NUMBER(asdecimal=False)),
+    Column('startbilldate', DateTime),
+    Column('nextbilldate', DateTime, nullable=False),
+    Column('uservars', VARCHAR(4000)),
+    Column('cardid', NUMBER(asdecimal=False)),
+    Column('orderdate', DateTime, nullable=False),
+    Column('billserviceid', NUMBER(asdecimal=False)),
+    Column('category_id', NUMBER(asdecimal=False), nullable=False),
+    Column('vgroupid', NUMBER(asdecimal=False), nullable=False),
+    Column('active_sim_cards_count', NUMBER(asdecimal=False))
 )
 
 
@@ -1676,7 +2769,7 @@ t_view_ic_operator = Table(
     Column('oper_name', VARCHAR(200), nullable=False),
     Column('conn_date', DateTime),
     Column('upd_date', DateTime),
-    Column('contract_no', VARCHAR(64), nullable=False),
+    Column('contract_no', VARCHAR(200), nullable=False),
     Column('currency_id', NUMBER(asdecimal=False)),
     Column('curr_name', VARCHAR(128))
 )
@@ -1711,7 +2804,7 @@ t_view_ic_schedule = Table(
 
 t_view_ic_tariff = Table(
     'view_ic_tariff', metadata,
-    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('id', Integer, nullable=False),
     Column('sched_id', NUMBER(asdecimal=False), nullable=False),
     Column('conn_type', CHAR(1), nullable=False),
     Column('tfbundle_id', NUMBER(asdecimal=False)),
@@ -1876,29 +2969,6 @@ t_view_pms_company = Table(
     Column('vgroupname', VARCHAR(200), nullable=False),
     Column('accountbalance', NUMBER(asdecimal=False), nullable=False),
     Column('currcode', VARCHAR(3), nullable=False)
-)
-
-
-t_view_prodpack_usage = Table(
-    'view_prodpack_usage', metadata,
-    Column('id', NUMBER(asdecimal=False), nullable=False),
-    Column('subsid', NUMBER(asdecimal=False), nullable=False),
-    Column('packageid', NUMBER(asdecimal=False), nullable=False),
-    Column('corpitem', NUMBER(asdecimal=False), nullable=False),
-    Column('cardid', NUMBER(asdecimal=False)),
-    Column('usagestart', DateTime),
-    Column('usagevalue', NUMBER(asdecimal=False), nullable=False),
-    Column('lastusagereset', DateTime),
-    Column('totalvalue', NUMBER(asdecimal=False), nullable=False),
-    Column('usageresetnumber', NUMBER(asdecimal=False), nullable=False),
-    Column('measureunit', NUMBER(asdecimal=False), nullable=False),
-    Column('measureunitcode', VARCHAR(32), nullable=False),
-    Column('billvolname', VARCHAR(200), nullable=False),
-    Column('packagename', VARCHAR(128), nullable=False),
-    Column('billservice', NUMBER(asdecimal=False), nullable=False),
-    Column('totalvolume', NUMBER(asdecimal=False)),
-    Column('billvolumeid', NUMBER(asdecimal=False), nullable=False),
-    Column('bname', VARCHAR(256))
 )
 
 
@@ -2087,7 +3157,8 @@ t_view_simcard_all = Table(
     Column('deleted', NUMBER(asdecimal=False)),
     Column('ip_address', NUMBER(asdecimal=False)),
     Column('vpn_id', NUMBER(asdecimal=False)),
-    Column('group_id', NUMBER(asdecimal=False))
+    Column('group_id', NUMBER(asdecimal=False)),
+    Column('dealerid', NUMBER(asdecimal=False))
 )
 
 
@@ -2146,7 +3217,8 @@ t_view_simcard_base = Table(
     Column('deleted', NUMBER(asdecimal=False)),
     Column('ip_address', NUMBER(asdecimal=False)),
     Column('vpn_id', NUMBER(asdecimal=False)),
-    Column('group_id', NUMBER(asdecimal=False))
+    Column('group_id', NUMBER(asdecimal=False)),
+    Column('dealerid', NUMBER(asdecimal=False))
 )
 
 
@@ -2205,8 +3277,6 @@ t_view_simcard_cab = Table(
     Column('deleted', NUMBER(asdecimal=False)),
     Column('cardgroupname', VARCHAR(200)),
     Column('card_group_id', NUMBER(asdecimal=False)),
-    Column('last_activity', DateTime),
-    Column('avg_time_minutes', NUMBER(asdecimal=False)),
     Column('ip_address', NUMBER(asdecimal=False)),
     Column('vpn_id', NUMBER(asdecimal=False))
 )
@@ -2267,7 +3337,20 @@ t_view_simcard_deleted = Table(
     Column('deleted', NUMBER(asdecimal=False)),
     Column('ip_address', NUMBER(asdecimal=False)),
     Column('vpn_id', NUMBER(asdecimal=False)),
-    Column('group_id', NUMBER(asdecimal=False))
+    Column('group_id', NUMBER(asdecimal=False)),
+    Column('dealerid', NUMBER(asdecimal=False))
+)
+
+
+t_view_simcard_imsi = Table(
+    'view_simcard_imsi', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('imsi', VARCHAR(20), nullable=False),
+    Column('simcardid', NUMBER(asdecimal=False)),
+    Column('state', NUMBER(asdecimal=False), nullable=False),
+    Column('regtime', DateTime),
+    Column('vgroup_id', NUMBER(asdecimal=False), nullable=False),
+    Column('msisdn', VARCHAR(32))
 )
 
 
@@ -2330,6 +3413,7 @@ t_view_simnumberrate = Table(
     Column('rate_info', VARCHAR(1000)),
     Column('rate_cost', NUMBER(asdecimal=False), nullable=False),
     Column('currency_id', NUMBER(asdecimal=False), nullable=False),
+    Column('number_mask', VARCHAR(2000)),
     Column('currcode', VARCHAR(3), nullable=False)
 )
 
@@ -2349,6 +3433,25 @@ t_view_simreplacementpool = Table(
     Column('client_id', NUMBER(asdecimal=False)),
     Column('clientname', VARCHAR(200)),
     Column('clientname_up', VARCHAR(200))
+)
+
+
+t_view_stat_client_cards = Table(
+    'view_stat_client_cards', metadata,
+    Column('dt', DateTime),
+    Column('client_id', NUMBER(asdecimal=False)),
+    Column('account_id', NUMBER(asdecimal=False)),
+    Column('clientname', VARCHAR(200), nullable=False),
+    Column('all_card', NUMBER(asdecimal=False)),
+    Column('dealer_card', NUMBER(asdecimal=False)),
+    Column('act_plus_finblock', NUMBER(asdecimal=False)),
+    Column('activated_beg', NUMBER(asdecimal=False)),
+    Column('activated_end', NUMBER(asdecimal=False)),
+    Column('activated_new', NUMBER(asdecimal=False)),
+    Column('admin_plus_finblock', NUMBER(asdecimal=False)),
+    Column('card_whiteip', NUMBER(asdecimal=False)),
+    Column('card_greyip', NUMBER(asdecimal=False)),
+    Column('card_actgreyip', NUMBER(asdecimal=False))
 )
 
 
@@ -2537,6 +3640,17 @@ t_view_tariffplan = Table(
 )
 
 
+t_view_time_period = Table(
+    'view_time_period', metadata,
+    Column('id', NUMBER(asdecimal=False), nullable=False),
+    Column('timeunit', NUMBER(asdecimal=False), nullable=False),
+    Column('amount', NUMBER(asdecimal=False), nullable=False),
+    Column('periodname', VARCHAR(128), nullable=False),
+    Column('periodinfo', VARCHAR(512)),
+    Column('unitcode', VARCHAR(5), nullable=False)
+)
+
+
 t_view_tplan_services = Table(
     'view_tplan_services', metadata,
     Column('planid', NUMBER(asdecimal=False), nullable=False),
@@ -2560,7 +3674,7 @@ t_view_userlogin = Table(
     Column('roleinfo', VARCHAR(2000)),
     Column('state_code', VARCHAR(32), nullable=False),
     Column('userdisplayname', VARCHAR(200)),
-    Column('userfullname', VARCHAR(386)),
+    Column('userfullname', VARCHAR(194)),
     Column('useremail', VARCHAR(256)),
     Column('groupname', VARCHAR(200)),
     Column('targetcompanyname', VARCHAR(256))
@@ -2721,6 +3835,7 @@ class Virtualgroup(Base):
     sms_schedule = Column(VARCHAR(100))
     ntfbsnomoneycooldowntime = Column(VARCHAR(200))
     ntfppackpercentthrshlds = Column(VARCHAR(200))
+    allperiodchargeforalignlicfee = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
 
     accountingfile = relationship('Accountingfile', primaryjoin='Virtualgroup.defaultaccfileid == Accountingfile.id')
     currency = relationship('Currency')
@@ -2821,9 +3936,9 @@ class Billservice(Base):
     billdirtype = Column(NUMBER(asdecimal=False))
     allowpackages = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     category_id = Column(ForeignKey('billservicecategory.id'), nullable=False, server_default=text("1 "))
+    blocked = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     prodnumber = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     rquservarclass = Column(VARCHAR(500))
-    blocked = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     srvconfig = Column(VARCHAR(4000))
     external_id = Column(VARCHAR(128))
     viewindict = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
@@ -2856,24 +3971,6 @@ class BsJobtasklog(Base):
     bs_jobtask = relationship('BsJobtask')
 
 
-class Cardgroup(Base):
-    __tablename__ = 'cardgroup'
-    __table_args__ = (
-        Index('uq_cardgroup_name', 'client_id', 'cg_name', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    cg_name = Column(VARCHAR(200))
-    cg_info = Column(VARCHAR(1000))
-    cg_parent = Column(ForeignKey('cardgroup.id'), index=True)
-    cg_path = Column(VARCHAR(200), unique=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
-
-    parent = relationship('Cardgroup', remote_side=[id])
-    client = relationship('Client')
-
-
-
 class Cardsery(Base):
     __tablename__ = 'cardseries'
 
@@ -2904,96 +4001,6 @@ class ClientAssociation(Base):
     virtualgroup = relationship('Virtualgroup')
 
 
-class ClientDataFile(Base):
-    __tablename__ = 'client_data_file'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_key = Column(VARCHAR(64), nullable=False)
-    data_info = Column(VARCHAR(200))
-    data_content = Column(LargeBinary)
-    data_size = Column(NUMBER(asdecimal=False))
-    file_name = Column(VARCHAR(200))
-    content_type = Column(VARCHAR(64))
-
-    client = relationship('Client')
-
-
-class ClientInvoiceDoc(Base):
-    __tablename__ = 'client_invoice_docs'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
-    invoice_id = Column(ForeignKey('client_invoice.id', ondelete='CASCADE'), nullable=False, index=True)
-    file_name = Column(VARCHAR(256))
-    file_size = Column(NUMBER(asdecimal=False))
-    file_id = Column(VARCHAR(256), nullable=False, unique=True)
-
-    client = relationship('Client')
-    invoice = relationship('ClientInvoice')
-
-
-class ClientUiConfig(Base):
-    __tablename__ = 'client_ui_config'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, unique=True)
-    theme_name = Column(VARCHAR(200))
-    custom_logo = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    form_settings = Column(VARCHAR(256))
-
-    client = relationship('Client')
-
-
-class ClientUiMsg(Base):
-    __tablename__ = 'client_ui_msg'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    msg_time = Column(TIMESTAMP, nullable=False, index=True, server_default=text("current_timestamp "))
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
-    subject = Column(VARCHAR(512))
-    message = Column(Text)
-
-    client = relationship('Client')
-
-
-class ClientUrlNtf(Base):
-    __tablename__ = 'client_url_ntf'
-    __table_args__ = (
-        CheckConstraint('NVL2(VGROUP_ID, 1, 0) + NVL2(CLIENT_ID, 1, 0) = 1'),
-        CheckConstraint('NVL2(VGROUP_ID, 1, 0) + NVL2(CLIENT_ID, 1, 0) = 1')
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    lang_id = Column(ForeignKey('lang.id'), nullable=False)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'))
-    http_url_template = Column(VARCHAR(4000), nullable=False)
-    http_body_template = Column(VARCHAR(4000))
-    msg_state_codes = Column(VARCHAR(2000), nullable=False)
-    http_headers = Column(VARCHAR(2000))
-    vgroup_id = Column(ForeignKey('virtualgroup.id'))
-
-    client = relationship('Client')
-    lang = relationship('Lang')
-    vgroup = relationship('Virtualgroup')
-
-
-class Clientvehicle(Base):
-    __tablename__ = 'clientvehicle'
-    __table_args__ = (
-        Index('uq_clientvehicle', 'client_id', 'vehicle_number', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    client_id = Column(ForeignKey('client.id'), nullable=False)
-    vehicle_number = Column(VARCHAR(16), nullable=False)
-    info = Column(VARCHAR(1000))
-
-    client = relationship('Client')
-
-
 class Company2role(Base):
     __tablename__ = 'company2role'
     __table_args__ = (
@@ -3006,34 +4013,6 @@ class Company2role(Base):
 
     company = relationship('Company')
     companyrole = relationship('Companyrole')
-
-
-class Companypm(Base):
-    __tablename__ = 'companypms'
-    __table_args__ = (
-        CheckConstraint('commissionPrc between 0 and 100'),
-        CheckConstraint("onExcessAction in ('D','B','I')"),
-        CheckConstraint("workMode in ('T','P')"),
-        Index('uq_pms_type', 'vgroupid', 'pstypeid', unique=True)
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    companyid = Column(ForeignKey('company.id'), nullable=False)
-    vgroupid = Column(NUMBER(asdecimal=False), nullable=False)
-    code = Column(VARCHAR(32), nullable=False, unique=True)
-    accountid = Column(ForeignKey('account.id'), nullable=False, index=True)
-    daylimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    workmode = Column(CHAR(1), nullable=False)
-    onexcessaction = Column(CHAR(1), nullable=False, server_default=text("'D' "))
-    pstypeid = Column(ForeignKey('paymentsystemtype.id'), nullable=False, server_default=text("0 "))
-    billconfig = Column(VARCHAR(2000))
-    isalarm = Column(NUMBER(asdecimal=False), server_default=text("0"))
-    commissionprc = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    commissionflag = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-
-    account = relationship('Account')
-    company = relationship('Company')
-    paymentsystemtype = relationship('Paymentsystemtype')
 
 
 class Configbilling(Base):
@@ -3062,6 +4041,23 @@ class Contracttype(Base):
     contractsubject = relationship('Contractsubject')
 
 
+class DocTemplate(Base):
+    __tablename__ = 'doc_template'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    name = Column(VARCHAR(64))
+    type_id = Column(ForeignKey('doc_template_type.id', ondelete='CASCADE'), nullable=False)
+    vgroup_id = Column(NUMBER(asdecimal=False), nullable=False)
+    info = Column(VARCHAR(256))
+    file_name = Column(VARCHAR(1024))
+    file_size = Column(NUMBER(asdecimal=False))
+    file_last_update = Column(TIMESTAMP)
+    file_data_content = Column(LargeBinary)
+    file_content_type = Column(VARCHAR(1024))
+
+    type = relationship('DocTemplateType')
+
+
 class Externalservice(Base):
     __tablename__ = 'externalservice'
     __table_args__ = (
@@ -3076,46 +4072,6 @@ class Externalservice(Base):
     company = relationship('Company')
 
 
-class Fincorraccount(Base):
-    __tablename__ = 'fincorraccount'
-    __table_args__ = (
-        Index('uq_fincorraccount', 'vgroupid', 'corrtypeid', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False)
-    corrtypeid = Column(ForeignKey('fincorrtype.id'), nullable=False)
-    accountid = Column(ForeignKey('account.id'), nullable=False, index=True)
-    daylimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    weeklimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    monthlimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    lastday = Column(DateTime)
-    lastweek = Column(DateTime)
-    lastmonth = Column(DateTime)
-    lastdayvalue = Column(NUMBER(asdecimal=False))
-    lastweekvalue = Column(NUMBER(asdecimal=False))
-    lastmonthvalue = Column(NUMBER(asdecimal=False))
-
-    account = relationship('Account')
-    fincorrtype = relationship('Fincorrtype')
-    virtualgroup = relationship('Virtualgroup')
-
-
-class GeoArea(Base):
-    __tablename__ = 'geo_area'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    name = Column(VARCHAR(100), nullable=False)
-    description = Column(VARCHAR(150))
-    circle = Column(NUMBER(asdecimal=False))
-    radius = Column(NUMBER(asdecimal=False))
-    points = Column(VARCHAR(1000))
-    client = Column(ForeignKey('client.id', ondelete='CASCADE'))
-
-    client1 = relationship('Client')
-    cards = relationship('Basecard', secondary='card_geo_area')
-
-
 class IcOperator(Base):
     __tablename__ = 'ic_operator'
 
@@ -3123,24 +4079,10 @@ class IcOperator(Base):
     oper_name = Column(VARCHAR(200), nullable=False, unique=True)
     conn_date = Column(DateTime)
     upd_date = Column(DateTime)
-    contract_no = Column(VARCHAR(64), nullable=False, unique=True)
+    contract_no = Column(VARCHAR(200), nullable=False, unique=True)
     currency_id = Column(ForeignKey('currency.id'))
 
     currency = relationship('Currency')
-
-
-class Mcell(Base):
-    __tablename__ = 'mcell'
-    __table_args__ = (
-        Index('uq_mcell', 'cellsetid', 'lac', 'cellid', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    cellsetid = Column(ForeignKey('mcellset.id', ondelete='CASCADE'), nullable=False)
-    lac = Column(NUMBER(asdecimal=False), nullable=False)
-    cellid = Column(NUMBER(asdecimal=False), nullable=False)
-
-    mcellset = relationship('Mcellset')
 
 
 class Messagetemplate(Base):
@@ -3225,31 +4167,23 @@ class Ntfsetting(Base):
     vgroup = relationship('Virtualgroup')
 
 
-class Parkbillzone(Base):
-    __tablename__ = 'parkbillzone'
+class Parking(Base):
+    __tablename__ = 'parking'
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    pzonename = Column(VARCHAR(200), nullable=False, unique=True)
-    pzoneinfo = Column(VARCHAR(1000))
-    defaultcost = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    defcurrencyid = Column(ForeignKey('currency.id'))
+    vgroupid = Column(NUMBER(asdecimal=False), nullable=False, index=True)
+    externalid = Column(VARCHAR(64), nullable=False, unique=True)
+    parkname = Column(VARCHAR(512))
+    parkaddress = Column(VARCHAR(1024))
+    parkspace = Column(NUMBER(asdecimal=False), server_default=text("0"))
+    parktypeid = Column(ForeignKey('parkingtype.id'), nullable=False)
+    contactpersonid = Column(NUMBER(asdecimal=False))
+    workschedule = Column(VARCHAR(1024))
+    parkbillzoneid = Column(ForeignKey('parkbillzone.id'), nullable=False)
+    rentcost = Column(NUMBER(asdecimal=False))
 
-    currency = relationship('Currency')
-
-
-class Parkomat(Base):
-    __tablename__ = 'parkomat'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False, index=True)
-    ptname = Column(VARCHAR(200), nullable=False)
-    ptinfo = Column(VARCHAR(1000))
-    geoaddress = Column(VARCHAR(500))
-    ipaddress = Column(VARCHAR(32), unique=True)
-    extid = Column(VARCHAR(32), unique=True)
-    paymethod = Column(VARCHAR(200))
-
-    virtualgroup = relationship('Virtualgroup')
+    parkbillzone = relationship('Parkbillzone')
+    parkingtype = relationship('Parkingtype')
 
 
 class Parkprivilege(Base):
@@ -3266,8 +4200,8 @@ class Parkprivilege(Base):
     info = Column(VARCHAR(1000))
     ownerdnameup = Column(VARCHAR(200), nullable=False, index=True)
     privtypeid = Column(ForeignKey('parkprivilegetype.id'), nullable=False)
-    privpersonid = Column(ForeignKey('personinfo.id'))
-    reppersonid = Column(ForeignKey('personinfo.id'))
+    privpersonid = Column(NUMBER(asdecimal=False))
+    reppersonid = Column(NUMBER(asdecimal=False))
     insurancenumber = Column(VARCHAR(32))
     vehiclemodel = Column(VARCHAR(128))
     vehiclecolor = Column(VARCHAR(128))
@@ -3278,81 +4212,23 @@ class Parkprivilege(Base):
     disperiodend = Column(DateTime)
     disreview = Column(DateTime)
 
-    personinfo = relationship('Personinfo', primaryjoin='Parkprivilege.privpersonid == Personinfo.id')
     parkprivilegetype = relationship('Parkprivilegetype')
-    personinfo1 = relationship('Personinfo', primaryjoin='Parkprivilege.reppersonid == Personinfo.id')
 
 
-class Productactionqueue(Base):
-    __tablename__ = 'productactionqueue'
-    __table_args__ = (
-        Index('uq_productactionqueue', 'card_id', 'prod_id', unique=True),
-    )
+class Parkvehicle(Base):
+    __tablename__ = 'parkvehicle'
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, server_default=text("sysdate"))
-    card_id = Column(NUMBER(asdecimal=False), nullable=False)
-    prod_id = Column(NUMBER(asdecimal=False), nullable=False)
-    next_try = Column(DateTime, nullable=False, index=True)
-    discount_id = Column(NUMBER(asdecimal=False))
-    subscriptionid = Column(NUMBER(asdecimal=False))
-    actiontype = Column(NUMBER(asdecimal=False), server_default=text("0"))
-    attemptcount = Column(NUMBER(asdecimal=False), server_default=text("0"))
-    requestinfo = Column(VARCHAR(4000))
-    provisioning = Column(NUMBER(asdecimal=False), server_default=text("0"))
-    uservars = Column(VARCHAR(4000))
-    modifiers = Column(VARCHAR(1000))
-    ext_account_id = Column(ForeignKey('account.id'))
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    vregnum = Column(VARCHAR(10), unique=True)
+    client_id = Column(NUMBER(asdecimal=False), index=True)
+    billcard_id = Column(NUMBER(asdecimal=False), index=True)
+    exmpriv = Column(NUMBER(asdecimal=False))
+    reg_type = Column(ForeignKey('parkvehicleregtype.id'), nullable=False, server_default=text("1 "))
+    reg_details = Column(VARCHAR(1000))
+    info = Column(VARCHAR(1000))
 
-    ext_account = relationship('Account')
-
-
-class Qo(Base):
-    __tablename__ = 'qos'
-    __table_args__ = (
-        Index('uq_qoscode', 'servicetype', 'code', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    code = Column(VARCHAR(32), nullable=False)
-    servicetype = Column(ForeignKey('baseservicetype.id'))
-    name = Column(VARCHAR(128), nullable=False)
-    extid = Column(VARCHAR(32), nullable=False)
-
-    baseservicetype = relationship('Baseservicetype')
-
-
-class Qosp(Qo):
-    __tablename__ = 'qosp'
-
-    id = Column(ForeignKey('qos.id'), primary_key=True)
-    uspeed = Column(NUMBER(asdecimal=False), nullable=False)
-    dspeed = Column(NUMBER(asdecimal=False), nullable=False)
-    classid = Column(NUMBER(asdecimal=False), server_default=text("1"))
-
-
-class QueueSendInvoiceDoc(Base):
-    __tablename__ = 'queue_send_invoice_docs'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
-    invoice_id = Column(ForeignKey('client_invoice.invoice_id', ondelete='CASCADE'))
-    vgroup_id = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'))
-    lang_id = Column(ForeignKey('lang.id'))
-    path_file = Column(VARCHAR(1024))
-    created = Column(TIMESTAMP)
-    last_send = Column(TIMESTAMP)
-    to_delivery = Column(VARCHAR(256))
-    count_try_send = Column(NUMBER(asdecimal=False))
-    type_delivery = Column(VARCHAR(64))
-    status = Column(VARCHAR(128))
-    error_message = Column(VARCHAR(2048))
-    service = Column(VARCHAR(128))
-
-    client = relationship('Client')
-    invoice = relationship('ClientInvoice')
-    lang = relationship('Lang')
-    vgroup = relationship('Virtualgroup')
+    parkvehicleregtype = relationship('Parkvehicleregtype')
 
 
 class Sgsngroup(Base):
@@ -3384,8 +4260,8 @@ class Simnumberfakeprefix(Base):
 class Simnumberrate(Base):
     __tablename__ = 'simnumberrate'
     __table_args__ = (
-        Index('uq_simnumrate', 'vgroup_id', 'rate_level', unique=True),
-        Index('uq_simnumrate_name', 'vgroup_id', 'rate_name', unique=True)
+        Index('uq_simnumrate_name', 'vgroup_id', 'rate_name', unique=True),
+        Index('uq_simnumrate', 'vgroup_id', 'rate_level', unique=True)
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
@@ -3396,49 +4272,10 @@ class Simnumberrate(Base):
     rate_info = Column(VARCHAR(1000))
     rate_cost = Column(NUMBER(asdecimal=False), nullable=False)
     currency_id = Column(ForeignKey('currency.id'), nullable=False, index=True)
+    number_mask = Column(VARCHAR(2000))
 
     currency = relationship('Currency')
     vgroup = relationship('Virtualgroup')
-
-
-class Simreplacementpool(Base):
-    __tablename__ = 'simreplacementpool'
-    __table_args__ = (
-        Index('uq_simrepl_icc', 'vgroupid', 'icc', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False)
-    imsi = Column(VARCHAR(64), nullable=False, unique=True)
-    icc = Column(VARCHAR(64), nullable=False)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    userid = Column(NUMBER(asdecimal=False), nullable=False)
-    pin1 = Column(VARCHAR(16))
-    pin2 = Column(VARCHAR(16))
-    puk1 = Column(VARCHAR(16))
-    puk2 = Column(VARCHAR(16))
-    client_id = Column(ForeignKey('client.id', ondelete='SET NULL'), index=True)
-    sim_type = Column(VARCHAR(32))
-    sim_vendor = Column(VARCHAR(64))
-    sim_espec = Column(VARCHAR(32))
-    app_vendor = Column(VARCHAR(64))
-    app_version = Column(VARCHAR(64))
-    sim_actcode = Column(VARCHAR(256))
-    batch_number = Column(VARCHAR(64))
-
-    client = relationship('Client')
-    virtualgroup = relationship('Virtualgroup')
-
-
-class Smscommand(Base):
-    __tablename__ = 'smscommand'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    command = Column(VARCHAR(128), nullable=False)
-    info = Column(VARCHAR(256))
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
-
-    client = relationship('Client')
 
 
 class Tariffplan(Base):
@@ -3485,23 +4322,6 @@ class Timeperiod(Base):
     timeunit1 = relationship('Timeunit')
 
 
-class TrgRecord(Base):
-    __tablename__ = 'trg_record'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vgroup_id = Column(ForeignKey('virtualgroup.id'), nullable=False, index=True)
-    event_type_id = Column(ForeignKey('trg_eventtype.id'), nullable=False, index=True)
-    trg_name = Column(VARCHAR(200))
-    astate = Column(NUMBER(asdecimal=False), nullable=False)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
-    external_id = Column(VARCHAR(64), unique=True)
-    scope_id = Column(NUMBER(asdecimal=False), nullable=False)
-
-    client = relationship('Client')
-    event_type = relationship('TrgEventtype')
-    vgroup = relationship('Virtualgroup')
-
-
 class Userlogin(Base):
     __tablename__ = 'userlogin'
 
@@ -3516,6 +4336,8 @@ class Userlogin(Base):
     info = Column(VARCHAR(2000))
     targetcompanyid = Column(ForeignKey('company.id', ondelete='CASCADE'))
     login_lcase = Column(VARCHAR(64), nullable=False, unique=True)
+    last_pwd_change = Column(DateTime)
+    check_pwd_expired = Column(NUMBER(asdecimal=False))
 
     personinfo = relationship('Personinfo')
     adminstate = relationship('Adminstate')
@@ -3557,50 +4379,6 @@ class Vgtariffschedule(Base):
     virtualgroup = relationship('Virtualgroup')
 
 
-class Vpn(Base):
-    __tablename__ = 'vpn'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
-    vpn_type = Column(ForeignKey('vpn_type.id'), nullable=False)
-    description = Column(VARCHAR(1000))
-    vlan_id = Column(ForeignKey('vlan_ids.id'), unique=True)
-
-    client = relationship('Client')
-    vlan = relationship('VlanId')
-    vpn_type1 = relationship('VpnType')
-
-
-class VpnTypeToClient(Base):
-    __tablename__ = 'vpn_type_to_client'
-    __table_args__ = (
-        Index('uq_vpn_type_to_client', 'vpn_type', 'client_id', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vpn_type = Column(ForeignKey('vpn_type.id'), nullable=False)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
-
-    client = relationship('Client')
-    vpn_type1 = relationship('VpnType')
-
-
-class Weblogin(Base):
-    __tablename__ = 'weblogin'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    login = Column(VARCHAR(32), nullable=False, unique=True)
-    passwd = Column(VARCHAR(64), nullable=False)
-    ext_role = Column(NUMBER(asdecimal=False))
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), index=True)
-    approved = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    last_change = Column(DateTime, server_default=text("sysdate"))
-    last_passwd = Column(VARCHAR(64))
-
-    client = relationship('Client')
-
-
 class Xgaterole(Base):
     __tablename__ = 'xgaterole'
     __table_args__ = (
@@ -3613,7 +4391,7 @@ class Xgaterole(Base):
     role_name = Column(VARCHAR(128), nullable=False)
     role_info = Column(VARCHAR(1024))
     role_class = Column(VARCHAR(64), nullable=False)
-    xcmd_list = Column(VARCHAR(4000))
+    xcmd_list = Column(VARCHAR(2048))
     scope_id = Column(ForeignKey('xgatescope.id'))
     admin = Column(NUMBER(asdecimal=False))
 
@@ -3673,7 +4451,7 @@ class Basecard(Base):
     shipmentuserid = Column(NUMBER(asdecimal=False))
     shipmentuserinfo = Column(VARCHAR(200))
     repairdate = Column(DateTime)
-    check_state_id = Column(ForeignKey('cardcheckstate.id'), nullable=False, server_default=text("1 "))
+    check_state_id = Column(ForeignKey('cardcheckstate.id'))
     check_date = Column(DateTime)
     batch_number = Column(VARCHAR(64))
 
@@ -3691,8 +4469,8 @@ class Basecard(Base):
     groups = relationship('Cardgroup', secondary='cardgrouplink')
 
 
-class CardLastLocation(Basecard):
-    __tablename__ = 'card_last_location'
+class CardLastOperator(Basecard):
+    __tablename__ = 'card_last_operator'
 
     card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), primary_key=True)
     change_date = Column(DateTime, nullable=False)
@@ -3707,20 +4485,6 @@ class Pacodeattemptcounter(Basecard):
     firstattemptdate = Column(DateTime, nullable=False)
     lastattemptdate = Column(DateTime, nullable=False)
     lastattemptnum = Column(NUMBER(asdecimal=False), nullable=False)
-
-
-class Parkbillcard(Basecard):
-    __tablename__ = 'parkbillcard'
-
-    id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), primary_key=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
-    account_id = Column(ForeignKey('account.id', ondelete='SET NULL'), nullable=False)
-    face_number = Column(VARCHAR(64), unique=True)
-    info = Column(VARCHAR(1000))
-    rec_code_assigned = Column(DateTime)
-
-    account = relationship('Account')
-    client = relationship('Client')
 
 
 class Vouchercard(Basecard):
@@ -3750,21 +4514,28 @@ class ClientDiscount(Base):
     vgroup = relationship('Virtualgroup')
 
 
-class Fincorruserrule(Base):
-    __tablename__ = 'fincorruserrules'
-    __table_args__ = (
-        Index('uq_fincor_urule', 'userid', 'finaccid', unique=True),
-    )
+class Contract(Base):
+    __tablename__ = 'contract'
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    userid = Column(ForeignKey('userlogin.id', ondelete='CASCADE'), nullable=False)
-    finaccid = Column(ForeignKey('fincorraccount.id', ondelete='CASCADE'))
-    daylimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    lastday = Column(DateTime)
-    lastdayvalue = Column(NUMBER(asdecimal=False))
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    signed = Column(DateTime)
+    expired = Column(DateTime)
+    contract_no = Column(VARCHAR(64), nullable=False, unique=True)
+    contract_info = Column(VARCHAR(2048))
+    contract_file = Column(LargeBinary)
+    contract_person = Column(VARCHAR(512))
+    signer = Column(NUMBER(asdecimal=False), nullable=False, index=True)
+    promotion_code = Column(VARCHAR(64))
+    contract_file_size = Column(NUMBER(asdecimal=False))
+    contract_type = Column(ForeignKey('contracttype.id'))
+    contract_file_name = Column(VARCHAR(256))
+    dealercompanyid = Column(ForeignKey('company.id'))
+    point_of_sale = Column(VARCHAR(200))
+    sellerlogin = Column(VARCHAR(64), index=True)
 
-    fincorraccount = relationship('Fincorraccount')
-    userlogin = relationship('Userlogin')
+    contracttype = relationship('Contracttype')
+    company = relationship('Company')
 
 
 class IcObSchedule(Base):
@@ -3816,22 +4587,34 @@ class IcTfDirection(Base):
     operator = relationship('IcOperator')
 
 
-class IpAddressPool(Base):
-    __tablename__ = 'ip_address_pool'
+class Mcell(Base):
+    __tablename__ = 'mcell'
     __table_args__ = (
-        Index('uq_iap_id_vpn', 'id', 'vpn_id', unique=True),
+        Index('uq_mcell', 'cellsetid', 'lac', 'cellid', 'operid', unique=True),
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    type = Column(ForeignKey('ip_address_pool_type.id'), nullable=False)
-    vpn_id = Column(ForeignKey('vpn.id'), nullable=False)
-    address_mask = Column(VARCHAR(100), nullable=False)
-    description = Column(VARCHAR(1000))
-    total_ip_count = Column(NUMBER(asdecimal=False))
-    free_ip_count = Column(NUMBER(asdecimal=False))
+    cellsetid = Column(ForeignKey('mcellset.id', ondelete='CASCADE'), nullable=False)
+    lac = Column(NUMBER(asdecimal=False), nullable=False)
+    cellid = Column(NUMBER(asdecimal=False), nullable=False)
+    operid = Column(ForeignKey('mnoperator.id'))
 
-    ip_address_pool_type = relationship('IpAddressPoolType')
-    vpn = relationship('Vpn')
+    mcellset = relationship('Mcellset')
+    mnoperator = relationship('Mnoperator')
+
+
+class Mnloc2cellset(Base):
+    __tablename__ = 'mnloc2cellset'
+    __table_args__ = (
+        Index('uq_mnloc2cellset', 'locid', 'cellsetid', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    locid = Column(ForeignKey('mnlocation.id', ondelete='CASCADE'), nullable=False)
+    cellsetid = Column(ForeignKey('mcellset.id', ondelete='CASCADE'), nullable=False, index=True)
+
+    mcellset = relationship('Mcellset')
+    mnlocation = relationship('Mnlocation')
 
 
 class Mnloc2country(Base):
@@ -3884,42 +4667,6 @@ class Mvnohomeoperator(Base):
     vgroup = relationship('Virtualgroup')
 
 
-class Parking(Base):
-    __tablename__ = 'parking'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False, index=True)
-    externalid = Column(VARCHAR(64), nullable=False, unique=True)
-    parkname = Column(VARCHAR(512))
-    parkaddress = Column(VARCHAR(1024))
-    parkspace = Column(NUMBER(asdecimal=False), server_default=text("0"))
-    parktypeid = Column(ForeignKey('parkingtype.id'), nullable=False)
-    contactpersonid = Column(NUMBER(asdecimal=False))
-    workschedule = Column(VARCHAR(1024))
-    parkbillzoneid = Column(ForeignKey('parkbillzone.id'), nullable=False)
-    rentcost = Column(NUMBER(asdecimal=False))
-
-    parkbillzone = relationship('Parkbillzone')
-    parkingtype = relationship('Parkingtype')
-    virtualgroup = relationship('Virtualgroup')
-
-
-class Parkingabonement(Base):
-    __tablename__ = 'parkingabonement'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
-    regnum = Column(VARCHAR(32), nullable=False, unique=True)
-    vehicenum = Column(VARCHAR(16), nullable=False)
-    activefrom = Column(DateTime, nullable=False)
-    activetill = Column(DateTime, nullable=False)
-    period_id = Column(ForeignKey('timeperiod.id'), nullable=False)
-
-    client = relationship('Client')
-    period = relationship('Timeperiod')
-
-
 class Paymentschema(Base):
     __tablename__ = 'paymentschema'
 
@@ -3935,6 +4682,7 @@ class Paymentschema(Base):
     percentdurationforalignlicfee = Column(NUMBER(asdecimal=False))
     onetimechargewithtrafficend = Column(NUMBER(asdecimal=False))
     switchtodailylicfee = Column(NUMBER(asdecimal=False))
+    allperiodchargeforalignlicfee = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
 
     currency = relationship('Currency')
     billingaction = relationship('Billingaction')
@@ -3995,57 +4743,6 @@ class Tariffplanschedule(Base):
     routeschema1 = relationship('Routeschema')
 
 
-class TrgAction(Base):
-    __tablename__ = 'trg_action'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    action_type_id = Column(ForeignKey('trg_actiontype.id'), nullable=False, index=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
-    params = Column(VARCHAR(200))
-
-    action_type = relationship('TrgActiontype')
-    trigger = relationship('TrgRecord')
-
-
-class TrgConfigCounter(Base):
-    __tablename__ = 'trg_config_counter'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
-    bill_service = Column(ForeignKey('billservice.id'), nullable=False)
-    measure_unit = Column(ForeignKey('measureunit.id'))
-    limit_value = Column(NUMBER(asdecimal=False), nullable=False)
-    period_id = Column(ForeignKey('timeperiod.id'), nullable=False)
-    changed_date = Column(TIMESTAMP, nullable=False, server_default=text("sysdate "))
-    count_bill_services = Column(VARCHAR(500))
-    count_currency_id = Column(NUMBER(asdecimal=False))
-
-    billservice = relationship('Billservice')
-    measureunit = relationship('Measureunit')
-    period = relationship('Timeperiod')
-    trigger = relationship('TrgRecord')
-
-
-class TrgCtrlLocationConfig(Base):
-    __tablename__ = 'trg_ctrl_location_config'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
-    check_interval_in_seconds = Column(NUMBER(asdecimal=False), nullable=False)
-
-    trigger = relationship('TrgRecord')
-
-
-class TrgLiveImsiConfig(Base):
-    __tablename__ = 'trg_live_imsi_config'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
-    enabled_action_on_init = Column(NUMBER(asdecimal=False), server_default=text("0"))
-
-    trigger = relationship('TrgRecord')
-
-
 class Vgtariffscheduledatum(Base):
     __tablename__ = 'vgtariffscheduledata'
     __table_args__ = (
@@ -4098,6 +4795,62 @@ class Zonedirection(Base):
     tariffzone = relationship('Tariffzone')
 
 
+class Account(Base):
+    __tablename__ = 'account'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    contractid = Column(ForeignKey('contract.id', ondelete='CASCADE'), index=True)
+    client = Column(NUMBER(asdecimal=False), index=True)
+    acctype = Column(ForeignKey('accounttype.id'), nullable=False)
+    external_id = Column(VARCHAR(64), unique=True, server_default=text("NULL"))
+    appsubtype = Column(VARCHAR(32))
+    balance = Column(NUMBER(asdecimal=False), nullable=False)
+    nlimit = Column(NUMBER(asdecimal=False), nullable=False)
+    currency = Column(ForeignKey('currency.id'), nullable=False)
+    firsttr_date = Column(TIMESTAMP)
+    lasttr_date = Column(TIMESTAMP)
+    vgroupid = Column(ForeignKey('virtualgroup.id'), nullable=False, index=True)
+    last_charge_date = Column(TIMESTAMP)
+    stbalanceday = Column(NUMBER(asdecimal=False))
+    stbalancemonth = Column(NUMBER(asdecimal=False))
+    state_id = Column(ForeignKey('accountstate.id'), nullable=False)
+    last_recharge_date = Column(TIMESTAMP)
+    nextbillattempt = Column(DateTime, index=True)
+    lastbillattempt = Column(DateTime)
+    billing_mode = Column(NUMBER(asdecimal=False), nullable=False)
+    external_contract = Column(VARCHAR(125))
+    contract_date = Column(DateTime)
+    personal_manager = Column(VARCHAR(125))
+    spending_limit = Column(NUMBER(asdecimal=False))
+    limit_notify = Column(NUMBER(asdecimal=False))
+    last_activity_date = Column(DateTime)
+    change_version = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    without_lock = Column(NUMBER(asdecimal=False))
+    joint_state = Column(VARCHAR(600))
+    limit_shift = Column(NUMBER(asdecimal=False))
+
+    accounttype = relationship('Accounttype')
+    contract = relationship('Contract')
+    currency1 = relationship('Currency')
+    state = relationship('Accountstate')
+    virtualgroup = relationship('Virtualgroup')
+
+
+class AccountMlt(Account):
+    __tablename__ = 'account_mlt'
+
+    id = Column(ForeignKey('account.id', ondelete='CASCADE'), primary_key=True)
+    created = Column(DateTime, nullable=False, server_default=text("current_date "))
+    init_card_id = Column(ForeignKey('basecard.id', ondelete='SET NULL'), index=True)
+    dealer_id = Column(ForeignKey('company.id'), index=True)
+    creator_login = Column(VARCHAR(128))
+    info = Column(VARCHAR(1000))
+
+    dealer = relationship('Company')
+    init_card = relationship('Basecard')
+
+
 class BankInformationSub(Base):
     __tablename__ = 'bank_information_subs'
     __table_args__ = (
@@ -4114,36 +4867,6 @@ class BankInformationSub(Base):
     card = relationship('Basecard')
 
 
-class Block(Base):
-    __tablename__ = 'block'
-    __table_args__ = (
-        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
-        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
-        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
-        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
-        Index('uq_block', 'card', 'client', 'accfile', 'vgroup', unique=True)
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vgroup = Column(ForeignKey('virtualgroup.id'))
-    client = Column(ForeignKey('client.id', ondelete='CASCADE'))
-    card = Column(ForeignKey('basecard.id', ondelete='CASCADE'))
-    restrictions = Column(VARCHAR(2000), nullable=False)
-    accfile = Column(ForeignKey('accountingfile.id', ondelete='CASCADE'))
-
-    accountingfile = relationship('Accountingfile')
-    basecard = relationship('Basecard')
-    client1 = relationship('Client')
-    virtualgroup = relationship('Virtualgroup')
-
-
-t_card_geo_area = Table(
-    'card_geo_area', metadata,
-    Column('card_id', ForeignKey('basecard.id', ondelete='CASCADE'), primary_key=True),
-    Column('area_id', ForeignKey('geo_area.id', ondelete='CASCADE'), nullable=False, index=True)
-)
-
-
 class CardGeoLocation(Base):
     __tablename__ = 'card_geo_location'
 
@@ -4156,17 +4879,6 @@ class CardGeoLocation(Base):
     status = Column(VARCHAR(50), nullable=False)
 
     card = relationship('Basecard')
-
-
-class CardGroupToIaPool(Base):
-    __tablename__ = 'card_group_to_ia_pool'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    card_group_id = Column(ForeignKey('cardgroup.id'), nullable=False)
-    pool_id = Column(ForeignKey('ip_address_pool.id'), nullable=False)
-
-    card_group = relationship('Cardgroup')
-    pool = relationship('IpAddressPool')
 
 
 t_card_notification = Table(
@@ -4182,18 +4894,11 @@ t_card_notification = Table(
 )
 
 
-t_cardgrouplink = Table(
-    'cardgrouplink', metadata,
-    Column('card_id', ForeignKey('basecard.id', ondelete='CASCADE'), primary_key=True),
-    Column('group_id', ForeignKey('cardgroup.id', ondelete='CASCADE'), nullable=False, index=True)
-)
-
-
 class Cardpayntfconfig(Base):
     __tablename__ = 'cardpayntfconfig'
     __table_args__ = (
-        Index('uq_cardpayntfconfig', 'card_id', 'vgroup_id', unique=True),
-        Index('cardpayntfconfig_inx', 'vgroup_id', 'card_id')
+        Index('cardpayntfconfig_inx', 'vgroup_id', 'card_id'),
+        Index('uq_cardpayntfconfig', 'card_id', 'vgroup_id', unique=True)
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
@@ -4207,41 +4912,6 @@ class Cardpayntfconfig(Base):
 
     card = relationship('Basecard')
     vgroup = relationship('Virtualgroup')
-
-
-class ClientDiscountActivateRule(Base):
-    __tablename__ = 'client_discount_activate_rule'
-    __table_args__ = (
-        Index('ix_cl_discount_act_rule', 'client_id', 'billservice_id'),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
-    billservice_id = Column(ForeignKey('billservice.id'))
-    discount_id = Column(ForeignKey('client_discount.id'), nullable=False)
-    threshold_value = Column(NUMBER(asdecimal=False), nullable=False)
-    threshold_type = Column(NUMBER(asdecimal=False), nullable=False)
-    measure_unit_id = Column(ForeignKey('measureunit.id'))
-    currency_id = Column(ForeignKey('currency.id'))
-
-    billservice = relationship('Billservice')
-    client = relationship('Client')
-    currency = relationship('Currency')
-    discount = relationship('ClientDiscount')
-    measure_unit = relationship('Measureunit')
-
-
-class ClientDiscountEntry(Base):
-    __tablename__ = 'client_discount_entry'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
-    discount_id = Column(ForeignKey('client_discount.id'), nullable=False, index=True)
-    active_from = Column(DateTime, nullable=False)
-    active_till = Column(DateTime, nullable=False)
-
-    client = relationship('Client')
-    discount = relationship('ClientDiscount')
 
 
 class ClientInvoiceCard(Base):
@@ -4294,10 +4964,10 @@ class IcTariff(Base):
     __tablename__ = 'ic_tariff'
     __table_args__ = (
         CheckConstraint("conn_type in ('I','O','A')"),
-        Index('uq_ic_tariff', 'sched_id', 'conn_type', 'tfbundle_id', 'dir_index', unique=True)
+        Index('uq_ic_tariff', 'sched_id', 'dir_index', 'tfbundle_id', 'conn_type', unique=True)
     )
 
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    id = Column(Integer, primary_key=True)
     sched_id = Column(ForeignKey('ic_ob_schedule.id', ondelete='CASCADE'), nullable=False)
     operator_id = Column(ForeignKey('ic_operator.id', ondelete='CASCADE'), nullable=False, index=True)
     conn_type = Column(CHAR(1), nullable=False)
@@ -4310,26 +4980,6 @@ class IcTariff(Base):
     operator = relationship('IcOperator')
     sched = relationship('IcObSchedule')
     tfbundle = relationship('IcTfbundle')
-
-
-class IpAddres(Base):
-    __tablename__ = 'ip_address'
-    __table_args__ = (
-        ForeignKeyConstraint(['pool_id', 'vpn_id'], ['ip_address_pool.id', 'ip_address_pool.vpn_id']),
-        Index('uq_ia_address_vpn_id', 'address', 'vpn_id', unique=True)
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    address = Column(NUMBER(asdecimal=False), nullable=False)
-    pool_id = Column(NUMBER(asdecimal=False), nullable=False)
-    card_id = Column(ForeignKey('basecard.id'))
-    vpn_id = Column(NUMBER(asdecimal=False), nullable=False)
-    session_id = Column(VARCHAR(256))
-    ocs_cluster_id = Column(VARCHAR(36))
-    release_date = Column(DateTime)
-
-    card = relationship('Basecard')
-    pool = relationship('IpAddressPool')
 
 
 class Mnloc2sgsn(Base):
@@ -4360,24 +5010,6 @@ class Mnloc2vlr(Base):
 
     mnlocation = relationship('Mnlocation')
     vlr = relationship('Vlr')
-
-
-class Parkvehicle(Base):
-    __tablename__ = 'parkvehicle'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
-    vregnum = Column(VARCHAR(10), unique=True)
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), index=True)
-    billcard_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), index=True)
-    exmpriv = Column(NUMBER(asdecimal=False))
-    reg_type = Column(ForeignKey('parkvehicleregtype.id'), nullable=False, server_default=text("1 "))
-    reg_details = Column(VARCHAR(1000))
-    info = Column(VARCHAR(1000))
-
-    billcard = relationship('Basecard')
-    client = relationship('Client')
-    parkvehicleregtype = relationship('Parkvehicleregtype')
 
 
 t_payment_compensation = Table(
@@ -4425,11 +5057,11 @@ class Product(Base):
     payment_schema_id = Column(ForeignKey('paymentschema.id'))
     smprodnumber = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     billserviceid = Column(ForeignKey('billservice.id'))
-    initprovstate = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("1 "))
+    initprovstate = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     provrequired = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     config = Column(VARCHAR(4000))
-    userstatementflag = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     incomeaccreport = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("1 "))
+    userstatementflag = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     enable_on_restricted_card = Column(NUMBER(asdecimal=False))
     change_prov_on_restricted = Column(NUMBER(asdecimal=False))
     autorenewwithtrafficend = Column(NUMBER(asdecimal=False))
@@ -4457,42 +5089,6 @@ class Sgsn2group(Base):
     sgsn = relationship('Sgsn')
 
 
-class Simcard(Base):
-    __tablename__ = 'simcard'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    imsi = Column(VARCHAR(64), nullable=False, unique=True)
-    account = Column(ForeignKey('account.id'), nullable=False, index=True)
-    client = Column(ForeignKey('client.id'), index=True)
-    contract = Column(ForeignKey('contract.id'), index=True)
-    pin1 = Column(VARCHAR(16))
-    pin2 = Column(VARCHAR(16))
-    puk1 = Column(VARCHAR(16))
-    puk2 = Column(VARCHAR(16))
-    iccid = Column(VARCHAR(32), nullable=False, unique=True)
-    imei = Column(VARCHAR(32))
-    cardid = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
-    corpgroupid = Column(NUMBER(asdecimal=False))
-    msisdn = Column(VARCHAR(32), unique=True)
-    old_msisdn = Column(VARCHAR(32), index=True)
-    immortal = Column(NUMBER(asdecimal=False), server_default=text("0"))
-    user_name = Column(VARCHAR(300))
-    clientchangedate = Column(DateTime)
-    tariff_version = Column(NUMBER(asdecimal=False))
-    cust_private_num = Column(VARCHAR(64))
-    sim_type = Column(VARCHAR(32))
-    sim_vendor = Column(VARCHAR(64))
-    sim_espec = Column(VARCHAR(32))
-    app_vendor = Column(VARCHAR(64))
-    app_version = Column(VARCHAR(64))
-    sim_actcode = Column(VARCHAR(256))
-
-    account1 = relationship('Account')
-    basecard = relationship('Basecard')
-    client1 = relationship('Client')
-    contract1 = relationship('Contract')
-
-
 class Tariffbindextservice(Base):
     __tablename__ = 'tariffbindextservice'
     __table_args__ = (
@@ -4512,8 +5108,8 @@ class Tariffbindextservice(Base):
 class Tariffbindgpr(Base):
     __tablename__ = 'tariffbindgprs'
     __table_args__ = (
-        Index('ix_tbind_gprs_ts', 'operatorid', 'planscheduleid', 'sgsngroupid'),
-        Index('uq_gprs_tfb', 'planscheduleid', 'operatorid', 'accpointid', 'sgsngroupid', 'vgschedid', unique=True)
+        Index('uq_gprs_tfb', 'planscheduleid', 'operatorid', 'accpointid', 'sgsngroupid', 'vgschedid', unique=True),
+        Index('ix_tbind_gprs_ts', 'operatorid', 'planscheduleid', 'sgsngroupid')
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
@@ -4558,8 +5154,8 @@ class Tariffbindmcall(Base):
     __table_args__ = (
         CheckConstraint("homeSubsMode in ('H','F','A')"),
         CheckConstraint("redirectMode in ('R','D','A')"),
-        Index('uq_mcall_tfb', 'planscheduleid', 'locid', 'bzoneid', 'billserviceid', 'redirectmode', 'homesubsmode', 'vgschedid', unique=True),
-        Index('ix_tbind_mcall_ts', 'bzoneid', 'locid', 'planscheduleid', 'billserviceid')
+        Index('ix_tbind_mcall_ts', 'bzoneid', 'locid', 'planscheduleid', 'billserviceid'),
+        Index('uq_mcall_tfb', 'planscheduleid', 'locid', 'bzoneid', 'billserviceid', 'redirectmode', 'homesubsmode', 'vgschedid', unique=True)
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
@@ -4581,26 +5177,12 @@ class Tariffbindmcall(Base):
     vgtariffschedule = relationship('Vgtariffschedule')
 
 
-class Tariffbindparking(Base):
-    __tablename__ = 'tariffbindparking'
-    __table_args__ = (
-        Index('uq_tariffbindparking', 'planscheduleid', 'parkzoneid', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    planscheduleid = Column(NUMBER(asdecimal=False), nullable=False)
-    parkzoneid = Column(NUMBER(asdecimal=False), nullable=False)
-    tariffid = Column(ForeignKey('tariff.id', ondelete='CASCADE'), nullable=False, index=True)
-
-    tariff = relationship('Tariff')
-
-
 class Tariffbindsm(Base):
     __tablename__ = 'tariffbindsms'
     __table_args__ = (
         CheckConstraint("homeSubsMode in ('H','F','A')"),
-        Index('uq_sms_tfb', 'planscheduleid', 'locid', 'bzoneid', 'homesubsmode', 'vgschedid', unique=True),
-        Index('ix_tbind_sms_ts', 'bzoneid', 'locid', 'planscheduleid')
+        Index('ix_tbind_sms_ts', 'bzoneid', 'locid', 'planscheduleid'),
+        Index('uq_sms_tfb', 'planscheduleid', 'locid', 'bzoneid', 'homesubsmode', 'vgschedid', unique=True)
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
@@ -4648,54 +5230,6 @@ class Tariffplanschedservice(Base):
     tariffplanschedule = relationship('Tariffplanschedule')
 
 
-class TrgActionQueue(Base):
-    __tablename__ = 'trg_action_queue'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False)
-    next_try = Column(DateTime, nullable=False)
-    attempt_count = Column(NUMBER(asdecimal=False))
-    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
-    record_date = Column(DateTime, nullable=False)
-
-    card = relationship('Basecard')
-    trigger = relationship('TrgRecord')
-
-
-class TrgBindCard(Base):
-    __tablename__ = 'trg_bind_card'
-    __table_args__ = (
-        CheckConstraint('(CARD_ID IS NOT NULL AND CARD_GROUP_ID IS NULL) OR (CARD_ID IS NULL AND CARD_GROUP_ID IS NOT NULL)'),
-        CheckConstraint('(CARD_ID IS NOT NULL AND CARD_GROUP_ID IS NULL) OR (CARD_ID IS NULL AND CARD_GROUP_ID IS NOT NULL)'),
-        CheckConstraint('ONSTATE in (0,1)'),
-        Index('uq_trg_bind_card', 'trigger_id', 'card_id', 'card_group_id', unique=True)
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
-    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), index=True)
-    card_group_id = Column(ForeignKey('cardgroup.id', ondelete='CASCADE'), index=True)
-    onstate = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("1 "))
-
-    card_group = relationship('Cardgroup')
-    card = relationship('Basecard')
-    trigger = relationship('TrgRecord')
-
-
-class TrgCounterCard(Base):
-    __tablename__ = 'trg_counter_card'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
-    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
-    usage_start = Column(DateTime, nullable=False)
-    usage_value = Column(NUMBER(asdecimal=False), nullable=False)
-    enqueued = Column(TIMESTAMP)
-
-    card = relationship('Basecard')
-    trigger = relationship('TrgRecord')
-
-
 class TrgLiveImsiState(Base):
     __tablename__ = 'trg_live_imsi_state'
 
@@ -4705,20 +5239,6 @@ class TrgLiveImsiState(Base):
     change_date = Column(DateTime, nullable=False)
 
     card = relationship('Basecard')
-
-
-class TrgLocker(Base):
-    __tablename__ = 'trg_locker'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
-    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
-    bill_service = Column(ForeignKey('billservice.id'), nullable=False)
-    lock_date = Column(DateTime, nullable=False)
-
-    billservice = relationship('Billservice')
-    card = relationship('Basecard')
-    trigger = relationship('TrgRecord')
 
 
 class AccfileCpProduct(Base):
@@ -4742,8 +5262,8 @@ class AccfileCpProduct(Base):
 class Accfileproduct(Base):
     __tablename__ = 'accfileproduct'
     __table_args__ = (
-        Index('uq_accfileprod_code', 'accfileid', 'ordercode', unique=True),
-        Index('uq_accfileprod', 'accfileid', 'prodid', unique=True)
+        Index('uq_accfileprod', 'accfileid', 'prodid', unique=True),
+        Index('uq_accfileprod_code', 'accfileid', 'ordercode', unique=True)
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
@@ -4762,44 +5282,6 @@ class Accfileproduct(Base):
 
     accountingfile = relationship('Accountingfile')
     product = relationship('Product')
-
-
-class Accountcommandqueue(Base):
-    __tablename__ = 'accountcommandqueue'
-    __table_args__ = (
-        Index('uq_acccommandqueue', 'account_id', 'type', 'card_id', 'client_id', 'closed', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    initiator = Column(VARCHAR(256), nullable=False)
-    created = Column(DateTime, nullable=False)
-    next_try = Column(DateTime, nullable=False)
-    type = Column(NUMBER(asdecimal=False), nullable=False)
-    src_account_id = Column(ForeignKey('account.id', ondelete='CASCADE'), nullable=False)
-    account_id = Column(ForeignKey('account.id', ondelete='CASCADE'))
-    card_id = Column(ForeignKey('simcard.id', ondelete='CASCADE'))
-    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'))
-    modes = Column(VARCHAR(400))
-    attempt_count = Column(NUMBER(asdecimal=False))
-    closed = Column(TIMESTAMP)
-    status = Column(NUMBER(asdecimal=False))
-    err_desc = Column(VARCHAR(256))
-
-    account = relationship('Account', primaryjoin='Accountcommandqueue.account_id == Account.id')
-    card = relationship('Simcard')
-    client = relationship('Client')
-    src_account = relationship('Account', primaryjoin='Accountcommandqueue.src_account_id == Account.id')
-
-
-t_card_activity = Table(
-    'card_activity', metadata,
-    Column('card_id', ForeignKey('simcard.id', ondelete='CASCADE'), nullable=False),
-    Column('type_id', NUMBER(asdecimal=False), nullable=False),
-    Column('last_activity', DateTime, index=True),
-    Column('change_avg_time', DateTime),
-    Column('avg_time_minutes', NUMBER(asdecimal=False)),
-    Index('uq_card_activity', 'card_id', 'type_id', unique=True)
-)
 
 
 class Cardpayntfqueue(Base):
@@ -4821,6 +5303,85 @@ class Cardpayntfqueue(Base):
     config = relationship('Cardpayntfconfig')
 
 
+class Client(Base):
+    __tablename__ = 'client'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    clienttypeid = Column(ForeignKey('clienttype.id'), nullable=False)
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    dname = Column(VARCHAR(200), nullable=False, index=True)
+    personid = Column(ForeignKey('personinfo.id', ondelete='SET NULL'))
+    passport = Column(VARCHAR(128), index=True)
+    regdoctypeid = Column(ForeignKey('client_regdoctype.id'))
+    regdoc_issued = Column(DateTime)
+    regdoc_issue_place = Column(VARCHAR(500))
+    bank_details = Column(VARCHAR(2000))
+    vgroupid = Column(ForeignKey('virtualgroup.id'), nullable=False)
+    regdoctype_info = Column(VARCHAR(256))
+    regdoc_series = Column(VARCHAR(16))
+    regdoc_number = Column(VARCHAR(32))
+    regaddress_json = Column(VARCHAR(4000))
+    dejureaddress_json = Column(VARCHAR(4000))
+    letter_of_attorney = Column(VARCHAR(256))
+    dname_up = Column(VARCHAR(200), index=True)
+    apptype = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    company_id = Column(ForeignKey('company.id'), index=True)
+    ntf_method = Column(VARCHAR(18), nullable=False, server_default=text("'sms' "))
+    assoc = Column(ForeignKey('client_association.id'))
+    primaccountid = Column(ForeignKey('account.id', ondelete='SET NULL'), index=True)
+    billmode_id = Column(ForeignKey('billingmode.id'), nullable=False)
+    external_id = Column(VARCHAR(64), unique=True, server_default=text("NULL"))
+    second_regdoctypeid = Column(ForeignKey('client_regdoctype.id'))
+    second_regdoctype_info = Column(VARCHAR(256))
+    second_regdoc_series = Column(VARCHAR(32))
+    second_regdoc_number = Column(VARCHAR(32))
+    second_regdoc_issued = Column(DateTime)
+    second_regdoc_expired = Column(DateTime)
+    regdoc_expired = Column(DateTime)
+    maxageoflocation = Column(NUMBER(asdecimal=False))
+    ccomment = Column(VARCHAR(125))
+    cinfo = Column(VARCHAR(4000))
+    invoice_delivery_settings = Column(VARCHAR(128))
+
+    client_association = relationship('ClientAssociation')
+    billmode = relationship('Billingmode')
+    clienttype = relationship('Clienttype')
+    company = relationship('Company')
+    personinfo = relationship('Personinfo')
+    account = relationship('Account')
+    client_regdoctype = relationship('ClientRegdoctype', primaryjoin='Client.regdoctypeid == ClientRegdoctype.id')
+    client_regdoctype1 = relationship('ClientRegdoctype', primaryjoin='Client.second_regdoctypeid == ClientRegdoctype.id')
+    virtualgroup = relationship('Virtualgroup')
+
+
+class Companypm(Base):
+    __tablename__ = 'companypms'
+    __table_args__ = (
+        CheckConstraint('commissionPrc between 0 and 100'),
+        CheckConstraint("onExcessAction in ('D','B','I')"),
+        CheckConstraint("workMode in ('T','P')"),
+        Index('uq_pms_type', 'vgroupid', 'pstypeid', unique=True)
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    companyid = Column(ForeignKey('company.id'), nullable=False)
+    vgroupid = Column(NUMBER(asdecimal=False), nullable=False)
+    code = Column(VARCHAR(32), nullable=False, unique=True)
+    accountid = Column(ForeignKey('account.id'), nullable=False, index=True)
+    daylimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    workmode = Column(CHAR(1), nullable=False)
+    onexcessaction = Column(CHAR(1), nullable=False, server_default=text("'D' "))
+    pstypeid = Column(ForeignKey('paymentsystemtype.id'), nullable=False, server_default=text("0 "))
+    billconfig = Column(VARCHAR(2000))
+    isalarm = Column(NUMBER(asdecimal=False), server_default=text("0"))
+    commissionprc = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    commissionflag = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+
+    account = relationship('Account')
+    company = relationship('Company')
+    paymentsystemtype = relationship('Paymentsystemtype')
+
+
 class Discountautoorder(Base):
     __tablename__ = 'discountautoorder'
 
@@ -4838,6 +5399,56 @@ class Discountautoorder(Base):
     clienttype = relationship('Clienttype')
     paymentsystemtype = relationship('Paymentsystemtype')
     product = relationship('Product')
+
+
+class Fincorraccount(Base):
+    __tablename__ = 'fincorraccount'
+    __table_args__ = (
+        Index('uq_fincorraccount', 'vgroupid', 'corrtypeid', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False)
+    corrtypeid = Column(ForeignKey('fincorrtype.id'), nullable=False)
+    accountid = Column(ForeignKey('account.id'), nullable=False, index=True)
+    daylimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    weeklimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    monthlimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    lastday = Column(DateTime)
+    lastweek = Column(DateTime)
+    lastmonth = Column(DateTime)
+    lastdayvalue = Column(NUMBER(asdecimal=False))
+    lastweekvalue = Column(NUMBER(asdecimal=False))
+    lastmonthvalue = Column(NUMBER(asdecimal=False))
+
+    account = relationship('Account')
+    fincorrtype = relationship('Fincorrtype')
+    virtualgroup = relationship('Virtualgroup')
+
+
+class Productactionqueue(Base):
+    __tablename__ = 'productactionqueue'
+    __table_args__ = (
+        Index('uq_productactionqueue', 'card_id', 'prod_id', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    created = Column(DateTime, server_default=text("sysdate"))
+    card_id = Column(NUMBER(asdecimal=False), nullable=False)
+    prod_id = Column(NUMBER(asdecimal=False), nullable=False)
+    next_try = Column(DateTime, nullable=False, index=True)
+    discount_id = Column(NUMBER(asdecimal=False))
+    subscriptionid = Column(NUMBER(asdecimal=False))
+    actiontype = Column(NUMBER(asdecimal=False), server_default=text("0"))
+    attemptcount = Column(NUMBER(asdecimal=False), server_default=text("0"))
+    requestinfo = Column(VARCHAR(4000))
+    provisioning = Column(NUMBER(asdecimal=False), server_default=text("0"))
+    uservars = Column(VARCHAR(4000))
+    modifiers = Column(VARCHAR(1000))
+    ext_account_id = Column(ForeignKey('account.id'))
+    requesttype = Column(NUMBER(asdecimal=False), server_default=text("0"))
+
+    ext_account = relationship('Account')
 
 
 class Productactivationcode(Base):
@@ -4879,110 +5490,48 @@ class Productpackage(Base):
     state = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("1 "))
     ntfppackpercentthrshlds = Column(VARCHAR(200))
     maxtransferpackagevol = Column(NUMBER(asdecimal=False))
+    transfervolperiodid = Column(ForeignKey('timeperiod.id'))
 
     billservice1 = relationship('Billservice')
     product = relationship('Product')
     tariffplan = relationship('Tariffplan')
-    timeperiod = relationship('Timeperiod')
+    timeperiod = relationship('Timeperiod', primaryjoin='Productpackage.transfervolperiodid == Timeperiod.id')
+    timeperiod1 = relationship('Timeperiod', primaryjoin='Productpackage.usageperiodid == Timeperiod.id')
 
 
-class Productsubscription(Base):
-    __tablename__ = 'productsubscription'
+class Simcard(Base):
+    __tablename__ = 'simcard'
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    orderdate = Column(DateTime, nullable=False)
-    order_no = Column(VARCHAR(32), nullable=False)
-    product_id = Column(ForeignKey('product.id'), nullable=False, index=True)
-    order_cost = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    currencyid = Column(ForeignKey('currency.id'), nullable=False)
-    startbilldate = Column(DateTime)
-    account_id = Column(ForeignKey('account.id'), nullable=False, index=True)
-    client_id = Column(ForeignKey('client.id'), index=True)
-    targetdesc = Column(VARCHAR(512))
-    payment_schema_id = Column(ForeignKey('paymentschema.id'), nullable=False)
-    nextbilldate = Column(DateTime, nullable=False, index=True)
-    lastbillamount = Column(NUMBER(asdecimal=False), nullable=False)
-    totalbillamount = Column(NUMBER(asdecimal=False), nullable=False)
-    lastattempnumber = Column(NUMBER(asdecimal=False))
-    payruleid = Column(ForeignKey('paymentschemarule.id'), index=True)
-    payrulestart = Column(DateTime)
-    state = Column(ForeignKey('productsubsstate.id'), nullable=False)
-    cardid = Column(ForeignKey('basecard.id'), index=True)
-    accfileid = Column(ForeignKey('accountingfile.id'))
-    lastbilldate = Column(DateTime)
-    last_error = Column(VARCHAR(64))
-    nextperiodcost = Column(NUMBER(asdecimal=False))
-    provisioning = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    uservars = Column(VARCHAR(4000))
-    xgatelogin_id = Column(NUMBER(asdecimal=False))
-    compensationcost = Column(NUMBER(asdecimal=False))
-    truncatedperiod = Column(NUMBER(asdecimal=False))
-    isneedsendlicfeeprediction = Column(NUMBER(asdecimal=False))
-    order_unpaid = Column(NUMBER(asdecimal=False))
+    imsi = Column(VARCHAR(64), nullable=False, unique=True)
+    account = Column(ForeignKey('account.id'), nullable=False, index=True)
+    client = Column(NUMBER(asdecimal=False), index=True)
+    contract = Column(ForeignKey('contract.id'), index=True)
+    pin1 = Column(VARCHAR(16))
+    pin2 = Column(VARCHAR(16))
+    puk1 = Column(VARCHAR(16))
+    puk2 = Column(VARCHAR(16))
+    iccid = Column(VARCHAR(32), nullable=False, unique=True)
+    imei = Column(VARCHAR(32))
+    cardid = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
+    corpgroupid = Column(NUMBER(asdecimal=False))
+    msisdn = Column(VARCHAR(32), unique=True)
+    old_msisdn = Column(VARCHAR(32), index=True)
+    immortal = Column(NUMBER(asdecimal=False), server_default=text("0"))
+    user_name = Column(VARCHAR(300))
+    clientchangedate = Column(DateTime)
+    tariff_version = Column(NUMBER(asdecimal=False))
+    cust_private_num = Column(VARCHAR(64))
+    sim_type = Column(VARCHAR(32))
+    sim_vendor = Column(VARCHAR(64))
+    sim_espec = Column(VARCHAR(32))
+    app_vendor = Column(VARCHAR(64))
+    app_version = Column(VARCHAR(64))
+    sim_actcode = Column(VARCHAR(256))
 
-    accountingfile = relationship('Accountingfile')
-    account = relationship('Account')
+    account1 = relationship('Account')
     basecard = relationship('Basecard')
-    client = relationship('Client')
-    currency = relationship('Currency')
-    payment_schema = relationship('Paymentschema')
-    paymentschemarule = relationship('Paymentschemarule')
-    product = relationship('Product')
-    productsubsstate = relationship('Productsubsstate')
-
-
-class Simcardimsi(Base):
-    __tablename__ = 'simcardimsi'
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    imsi = Column(VARCHAR(20), nullable=False, unique=True)
-    simcardid = Column(ForeignKey('simcard.id', ondelete='CASCADE'), nullable=False)
-    norder = Column(NUMBER(asdecimal=False), nullable=False)
-    tariffplanid = Column(NUMBER(asdecimal=False))
-    state = Column(NUMBER(asdecimal=False), nullable=False)
-    regtime = Column(DateTime)
-
-    simcard = relationship('Simcard')
-
-
-class Simnumber(Base):
-    __tablename__ = 'simnumber'
-    __table_args__ = (
-        CheckConstraint("own_type in ('OWN','MNP')"),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    pnumber = Column(VARCHAR(32), nullable=False, unique=True)
-    simcardid = Column(ForeignKey('simcard.id'), index=True)
-    numbertype = Column(ForeignKey('simnumbertype.id'), nullable=False)
-    norder = Column(NUMBER(asdecimal=False), nullable=False)
-    nstate = Column(NUMBER(asdecimal=False))
-    released = Column(DateTime)
-    rate_id = Column(ForeignKey('simnumberrate.id'), nullable=False, index=True)
-    vgroup_id = Column(ForeignKey('virtualgroup.id'), nullable=False, index=True)
-    own_type = Column(CHAR(3), nullable=False, server_default=text("'OWN' "))
-    operstate = Column(ForeignKey('simnumberstate.id'), nullable=False)
-    last_update = Column(DateTime, server_default=text("sysdate"))
-
-    simnumbertype = relationship('Simnumbertype')
-    simnumberstate = relationship('Simnumberstate')
-    rate = relationship('Simnumberrate')
-    simcard = relationship('Simcard')
-    vgroup = relationship('Virtualgroup')
-
-
-class TrgCompleteaction(Base):
-    __tablename__ = 'trg_completeaction'
-    __table_args__ = (
-        Index('uq_trg_completeaction', 'action_queue_id', 'action_id', unique=True),
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    action_id = Column(ForeignKey('trg_action.id', ondelete='CASCADE'), nullable=False, index=True)
-    action_queue_id = Column(ForeignKey('trg_action_queue.id', ondelete='CASCADE'), nullable=False)
-
-    action = relationship('TrgAction')
-    action_queue = relationship('TrgActionQueue')
+    contract1 = relationship('Contract')
 
 
 class Xgateuserprofile(Base):
@@ -4992,7 +5541,7 @@ class Xgateuserprofile(Base):
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False)
+    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False, index=True)
     profilename = Column(VARCHAR(200), nullable=False)
     profileinfo = Column(VARCHAR(4000))
     maxrequestperhour = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
@@ -5004,24 +5553,223 @@ class Xgateuserprofile(Base):
     virtualgroup = relationship('Virtualgroup')
 
 
-class Offlinepackageusage(Base):
-    __tablename__ = 'offlinepackageusage'
+class Accountcommandqueue(Base):
+    __tablename__ = 'accountcommandqueue'
     __table_args__ = (
-        Index('uq_offpackusage', 'subsid', 'packageid', 'cardid', 'usagestart', unique=True),
+        Index('uq_acccommandqueue', 'account_id', 'type', 'card_id', 'client_id', 'closed', unique=True),
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    subsid = Column(ForeignKey('productsubscription.id', ondelete='CASCADE'), nullable=False)
-    packageid = Column(ForeignKey('productpackage.id'), nullable=False)
-    cardid = Column(ForeignKey('simcard.id'))
-    usagestart = Column(DateTime)
-    usagestop = Column(DateTime)
-    usagevalue = Column(NUMBER(asdecimal=False), nullable=False)
-    actual_limit = Column(NUMBER(asdecimal=False))
+    initiator = Column(VARCHAR(256), nullable=False)
+    created = Column(DateTime, nullable=False)
+    next_try = Column(DateTime, nullable=False)
+    type = Column(NUMBER(asdecimal=False), nullable=False)
+    src_account_id = Column(ForeignKey('account.id', ondelete='CASCADE'), nullable=False)
+    account_id = Column(ForeignKey('account.id', ondelete='CASCADE'))
+    card_id = Column(ForeignKey('simcard.id', ondelete='CASCADE'))
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'))
+    modes = Column(VARCHAR(400))
+    attempt_count = Column(NUMBER(asdecimal=False))
+    closed = Column(TIMESTAMP)
+    status = Column(NUMBER(asdecimal=False))
+    err_desc = Column(VARCHAR(256))
 
-    simcard = relationship('Simcard')
-    productpackage = relationship('Productpackage')
-    productsubscription = relationship('Productsubscription')
+    account = relationship('Account', primaryjoin='Accountcommandqueue.account_id == Account.id')
+    card = relationship('Simcard')
+    client = relationship('Client')
+    src_account = relationship('Account', primaryjoin='Accountcommandqueue.src_account_id == Account.id')
+
+
+class Block(Base):
+    __tablename__ = 'block'
+    __table_args__ = (
+        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
+        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
+        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
+        CheckConstraint('NVL2(CARD, 1, 0) + NVL2(CLIENT, 1, 0) + NVL2(ACCFILE, 1, 0) + NVL2(VGROUP, 1, 0) = 1'),
+        Index('uq_block', 'card', 'client', 'accfile', 'vgroup', unique=True)
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    vgroup = Column(ForeignKey('virtualgroup.id'))
+    client = Column(ForeignKey('client.id', ondelete='CASCADE'))
+    card = Column(ForeignKey('basecard.id', ondelete='CASCADE'))
+    restrictions = Column(VARCHAR(2000), nullable=False)
+    accfile = Column(ForeignKey('accountingfile.id', ondelete='CASCADE'))
+
+    accountingfile = relationship('Accountingfile')
+    basecard = relationship('Basecard')
+    client1 = relationship('Client')
+    virtualgroup = relationship('Virtualgroup')
+
+
+t_card_avg_profile = Table(
+    'card_avg_profile', metadata,
+    Column('card_id', ForeignKey('simcard.id', ondelete='CASCADE'), nullable=False),
+    Column('type_id', NUMBER(asdecimal=False), nullable=False),
+    Column('change_avg_time', DateTime),
+    Column('avg_time_minutes', NUMBER(asdecimal=False)),
+    Index('uq_card_activity', 'card_id', 'type_id', unique=True)
+)
+
+
+class Cardgroup(Base):
+    __tablename__ = 'cardgroup'
+    __table_args__ = (
+        Index('uq_cardgroup_name', 'client_id', 'cg_name', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    cg_name = Column(VARCHAR(200))
+    cg_info = Column(VARCHAR(1000))
+    cg_parent = Column(ForeignKey('cardgroup.id'), index=True)
+    cg_path = Column(VARCHAR(200), unique=True)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
+
+    parent = relationship('Cardgroup', remote_side=[id])
+    client = relationship('Client')
+
+
+class ClientDataFile(Base):
+    __tablename__ = 'client_data_file'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
+    data_key = Column(VARCHAR(64), nullable=False)
+    data_info = Column(VARCHAR(200))
+    data_content = Column(LargeBinary)
+    data_size = Column(NUMBER(asdecimal=False))
+    file_name = Column(VARCHAR(200))
+    content_type = Column(VARCHAR(64))
+
+    client = relationship('Client')
+
+
+class ClientDiscountActivateRule(Base):
+    __tablename__ = 'client_discount_activate_rule'
+    __table_args__ = (
+        Index('ix_cl_discount_act_rule', 'client_id', 'billservice_id'),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
+    billservice_id = Column(ForeignKey('billservice.id'))
+    discount_id = Column(ForeignKey('client_discount.id'), nullable=False)
+    threshold_value = Column(NUMBER(asdecimal=False), nullable=False)
+    threshold_type = Column(NUMBER(asdecimal=False), nullable=False)
+    measure_unit_id = Column(ForeignKey('measureunit.id'))
+    currency_id = Column(ForeignKey('currency.id'))
+
+    billservice = relationship('Billservice')
+    client = relationship('Client')
+    currency = relationship('Currency')
+    discount = relationship('ClientDiscount')
+    measure_unit = relationship('Measureunit')
+
+
+class ClientDiscountEntry(Base):
+    __tablename__ = 'client_discount_entry'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
+    discount_id = Column(ForeignKey('client_discount.id'), nullable=False, index=True)
+    active_from = Column(DateTime, nullable=False)
+    active_till = Column(DateTime, nullable=False)
+
+    client = relationship('Client')
+    discount = relationship('ClientDiscount')
+
+
+class ClientInvoiceDoc(Base):
+    __tablename__ = 'client_invoice_docs'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
+    invoice_id = Column(ForeignKey('client_invoice.id', ondelete='CASCADE'), nullable=False, index=True)
+    file_name = Column(VARCHAR(256))
+    file_size = Column(NUMBER(asdecimal=False))
+    file_id = Column(VARCHAR(256), nullable=False, unique=True)
+
+    client = relationship('Client')
+    invoice = relationship('ClientInvoice')
+
+
+class ClientUiConfig(Base):
+    __tablename__ = 'client_ui_config'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, unique=True)
+    theme_name = Column(VARCHAR(200))
+    custom_logo = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    form_settings = Column(VARCHAR(256))
+
+    client = relationship('Client')
+
+
+class ClientUiMsg(Base):
+    __tablename__ = 'client_ui_msg'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    msg_time = Column(TIMESTAMP, nullable=False, index=True, server_default=text("current_timestamp "))
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
+    subject = Column(VARCHAR(512))
+    message = Column(Text)
+
+    client = relationship('Client')
+
+
+class ClientUrlNtf(Base):
+    __tablename__ = 'client_url_ntf'
+    __table_args__ = (
+        CheckConstraint('NVL2(VGROUP_ID, 1, 0) + NVL2(CLIENT_ID, 1, 0) = 1'),
+        CheckConstraint('NVL2(VGROUP_ID, 1, 0) + NVL2(CLIENT_ID, 1, 0) = 1')
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    lang_id = Column(ForeignKey('lang.id'), nullable=False)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'))
+    http_url_template = Column(VARCHAR(4000), nullable=False)
+    http_body_template = Column(VARCHAR(4000))
+    msg_state_codes = Column(VARCHAR(2000), nullable=False)
+    http_headers = Column(VARCHAR(2000))
+    vgroup_id = Column(ForeignKey('virtualgroup.id'))
+
+    client = relationship('Client')
+    lang = relationship('Lang')
+    vgroup = relationship('Virtualgroup')
+
+
+class Fincorruserrule(Base):
+    __tablename__ = 'fincorruserrules'
+    __table_args__ = (
+        Index('uq_fincor_urule', 'userid', 'finaccid', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    userid = Column(ForeignKey('userlogin.id', ondelete='CASCADE'), nullable=False)
+    finaccid = Column(ForeignKey('fincorraccount.id', ondelete='CASCADE'))
+    daylimit = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    lastday = Column(DateTime)
+    lastdayvalue = Column(NUMBER(asdecimal=False))
+
+    fincorraccount = relationship('Fincorraccount')
+    userlogin = relationship('Userlogin')
+
+
+class GeoArea(Base):
+    __tablename__ = 'geo_area'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    name = Column(VARCHAR(100), nullable=False)
+    description = Column(VARCHAR(150))
+    circle = Column(NUMBER(asdecimal=False))
+    radius = Column(NUMBER(asdecimal=False))
+    points = Column(VARCHAR(1000))
+    client = Column(ForeignKey('client.id', ondelete='CASCADE'))
+
+    client1 = relationship('Client')
+    cards = relationship('Basecard', secondary='card_geo_area')
 
 
 class Packageschedule(Base):
@@ -5065,7 +5813,7 @@ class Productpackageusage(Base):
     )
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
-    subsid = Column(ForeignKey('productsubscription.id', ondelete='CASCADE'), nullable=False)
+    subsid = Column(NUMBER(asdecimal=False), nullable=False)
     packageid = Column(ForeignKey('productpackage.id'), nullable=False)
     corpitem = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
     cardid = Column(ForeignKey('simcard.id'), index=True)
@@ -5078,7 +5826,6 @@ class Productpackageusage(Base):
 
     simcard = relationship('Simcard')
     productpackage = relationship('Productpackage')
-    productsubscription = relationship('Productsubscription')
 
 
 class Productrelation(Base):
@@ -5102,6 +5849,208 @@ class Productrelation(Base):
     product1 = relationship('Product', primaryjoin='Productrelation.product_id_2 == Product.id')
 
 
+class Productsubscription(Base):
+    __tablename__ = 'productsubscription'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    orderdate = Column(DateTime, nullable=False)
+    order_no = Column(VARCHAR(32), nullable=False)
+    product_id = Column(ForeignKey('product.id'), nullable=False, index=True)
+    order_cost = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    currencyid = Column(ForeignKey('currency.id'), nullable=False)
+    startbilldate = Column(DateTime)
+    account_id = Column(ForeignKey('account.id'), nullable=False, index=True)
+    client_id = Column(ForeignKey('client.id'), index=True)
+    targetdesc = Column(VARCHAR(512))
+    payment_schema_id = Column(ForeignKey('paymentschema.id'), nullable=False)
+    nextbilldate = Column(DateTime, nullable=False, index=True)
+    lastbillamount = Column(NUMBER(asdecimal=False), nullable=False)
+    totalbillamount = Column(NUMBER(asdecimal=False), nullable=False)
+    lastattempnumber = Column(NUMBER(asdecimal=False))
+    payruleid = Column(ForeignKey('paymentschemarule.id'))
+    payrulestart = Column(DateTime)
+    state = Column(ForeignKey('productsubsstate.id'), nullable=False)
+    cardid = Column(ForeignKey('basecard.id'), index=True)
+    accfileid = Column(ForeignKey('accountingfile.id'))
+    lastbilldate = Column(DateTime)
+    last_error = Column(VARCHAR(64))
+    nextperiodcost = Column(NUMBER(asdecimal=False))
+    provisioning = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    uservars = Column(VARCHAR(4000))
+    xgatelogin_id = Column(NUMBER(asdecimal=False))
+    compensationcost = Column(NUMBER(asdecimal=False))
+    truncatedperiod = Column(NUMBER(asdecimal=False))
+    isneedsendlicfeeprediction = Column(NUMBER(asdecimal=False))
+    order_unpaid = Column(NUMBER(asdecimal=False))
+    changestatedate = Column(DateTime, index=True)
+
+    accountingfile = relationship('Accountingfile')
+    account = relationship('Account')
+    basecard = relationship('Basecard')
+    client = relationship('Client')
+    currency = relationship('Currency')
+    payment_schema = relationship('Paymentschema')
+    paymentschemarule = relationship('Paymentschemarule')
+    product = relationship('Product')
+    productsubsstate = relationship('Productsubsstate')
+
+
+class QueueSendInvoiceDoc(Base):
+    __tablename__ = 'queue_send_invoice_docs'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
+    invoice_id = Column(ForeignKey('client_invoice.invoice_id', ondelete='CASCADE'))
+    vgroup_id = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'))
+    lang_id = Column(ForeignKey('lang.id'))
+    path_file = Column(VARCHAR(1024))
+    created = Column(TIMESTAMP)
+    last_send = Column(TIMESTAMP)
+    to_delivery = Column(VARCHAR(256))
+    count_try_send = Column(NUMBER(asdecimal=False))
+    type_delivery = Column(VARCHAR(64))
+    status = Column(VARCHAR(128))
+    error_message = Column(VARCHAR(2048))
+    service = Column(VARCHAR(128))
+
+    client = relationship('Client')
+    invoice = relationship('ClientInvoice')
+    lang = relationship('Lang')
+    vgroup = relationship('Virtualgroup')
+
+
+class Simcardimsi(Base):
+    __tablename__ = 'simcardimsi'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    imsi = Column(VARCHAR(20), nullable=False, unique=True)
+    simcardid = Column(ForeignKey('simcard.id', ondelete='CASCADE'))
+    state = Column(NUMBER(asdecimal=False), nullable=False)
+    regtime = Column(DateTime)
+    vgroup_id = Column(NUMBER(asdecimal=False), nullable=False)
+
+    simcard = relationship('Simcard')
+
+
+class Simnumber(Base):
+    __tablename__ = 'simnumber'
+    __table_args__ = (
+        CheckConstraint("own_type in ('OWN','MNP')"),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    pnumber = Column(VARCHAR(32), nullable=False, unique=True)
+    simcardid = Column(ForeignKey('simcard.id'), index=True)
+    numbertype = Column(ForeignKey('simnumbertype.id'), nullable=False)
+    norder = Column(NUMBER(asdecimal=False), nullable=False)
+    nstate = Column(NUMBER(asdecimal=False))
+    released = Column(DateTime)
+    rate_id = Column(ForeignKey('simnumberrate.id'), nullable=False, index=True)
+    vgroup_id = Column(ForeignKey('virtualgroup.id'), nullable=False, index=True)
+    own_type = Column(CHAR(3), nullable=False, server_default=text("'OWN' "))
+    operstate = Column(ForeignKey('simnumberstate.id'), nullable=False)
+    last_update = Column(DateTime, server_default=text("sysdate"))
+
+    simnumbertype = relationship('Simnumbertype')
+    simnumberstate = relationship('Simnumberstate')
+    rate = relationship('Simnumberrate')
+    simcard = relationship('Simcard')
+    vgroup = relationship('Virtualgroup')
+
+
+class Simreplacementpool(Base):
+    __tablename__ = 'simreplacementpool'
+    __table_args__ = (
+        Index('uq_simrepl_icc', 'vgroupid', 'icc', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    vgroupid = Column(ForeignKey('virtualgroup.id', ondelete='CASCADE'), nullable=False)
+    imsi = Column(VARCHAR(64), nullable=False, unique=True)
+    icc = Column(VARCHAR(64), nullable=False)
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    userid = Column(NUMBER(asdecimal=False), nullable=False)
+    pin1 = Column(VARCHAR(16))
+    pin2 = Column(VARCHAR(16))
+    puk1 = Column(VARCHAR(16))
+    puk2 = Column(VARCHAR(16))
+    client_id = Column(ForeignKey('client.id', ondelete='SET NULL'), index=True)
+    sim_type = Column(VARCHAR(32))
+    sim_vendor = Column(VARCHAR(64))
+    sim_espec = Column(VARCHAR(32))
+    app_vendor = Column(VARCHAR(64))
+    app_version = Column(VARCHAR(64))
+    sim_actcode = Column(VARCHAR(256))
+    batch_number = Column(VARCHAR(64))
+
+    client = relationship('Client')
+    virtualgroup = relationship('Virtualgroup')
+
+
+class TrgRecord(Base):
+    __tablename__ = 'trg_record'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    vgroup_id = Column(ForeignKey('virtualgroup.id'), nullable=False, index=True)
+    event_type_id = Column(ForeignKey('trg_eventtype.id'), nullable=False, index=True)
+    trg_name = Column(VARCHAR(200))
+    astate = Column(NUMBER(asdecimal=False), nullable=False)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False, index=True)
+    external_id = Column(VARCHAR(64), unique=True)
+    scope_id = Column(NUMBER(asdecimal=False), nullable=False)
+
+    client = relationship('Client')
+    event_type = relationship('TrgEventtype')
+    vgroup = relationship('Virtualgroup')
+
+
+class Vpn(Base):
+    __tablename__ = 'vpn'
+    __table_args__ = (
+        CheckConstraint('VLAN_ID > 0 AND VLAN_ID < 4096'),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
+    vpn_type = Column(ForeignKey('vpn_type.id'), nullable=False)
+    description = Column(VARCHAR(1000))
+    vlan_id = Column(ForeignKey('vlan_ids.id'), unique=True)
+
+    client = relationship('Client')
+    vlan = relationship('VlanId')
+    vpn_type1 = relationship('VpnType')
+
+
+class VpnTypeToClient(Base):
+    __tablename__ = 'vpn_type_to_client'
+    __table_args__ = (
+        Index('uq_vpn_type_to_client', 'vpn_type', 'client_id', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    vpn_type = Column(ForeignKey('vpn_type.id'), nullable=False)
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), nullable=False)
+
+    client = relationship('Client')
+    vpn_type1 = relationship('VpnType')
+
+
+class Weblogin(Base):
+    __tablename__ = 'weblogin'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    created = Column(DateTime, nullable=False, server_default=text("sysdate "))
+    login = Column(VARCHAR(32), nullable=False, unique=True)
+    passwd = Column(VARCHAR(64), nullable=False)
+    ext_role = Column(NUMBER(asdecimal=False))
+    client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), index=True)
+    approved = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    last_change = Column(DateTime, server_default=text("sysdate"))
+    last_passwd = Column(VARCHAR(64))
+
+    client = relationship('Client')
+
+
 class Xgatelogin(Base):
     __tablename__ = 'xgatelogin'
 
@@ -5119,12 +6068,28 @@ class Xgatelogin(Base):
     appdata = Column(VARCHAR(4000))
     client_id = Column(ForeignKey('client.id', ondelete='CASCADE'), index=True)
     login_lcase = Column(VARCHAR(64), nullable=False, unique=True)
+    last_pwd_change = Column(DateTime)
+    check_pwd_expired = Column(NUMBER(asdecimal=False))
 
     client = relationship('Client')
     virtualgroup = relationship('Virtualgroup')
     xgateuserprofile = relationship('Xgateuserprofile')
     company = relationship('Company')
     xrole = relationship('Xgaterole')
+
+
+t_card_geo_area = Table(
+    'card_geo_area', metadata,
+    Column('card_id', ForeignKey('basecard.id', ondelete='CASCADE'), primary_key=True),
+    Column('area_id', ForeignKey('geo_area.id', ondelete='CASCADE'), nullable=False, index=True)
+)
+
+
+t_cardgrouplink = Table(
+    'cardgrouplink', metadata,
+    Column('card_id', ForeignKey('basecard.id', ondelete='CASCADE'), primary_key=True),
+    Column('group_id', ForeignKey('cardgroup.id', ondelete='CASCADE'), nullable=False, index=True)
+)
 
 
 class ClientUiMsgUnread(Base):
@@ -5136,3 +6101,203 @@ class ClientUiMsgUnread(Base):
 
     login = relationship('Xgatelogin')
     msg = relationship('ClientUiMsg')
+
+
+class IpAddressPool(Base):
+    __tablename__ = 'ip_address_pool'
+    __table_args__ = (
+        Index('uq_iap_id_vpn', 'id', 'vpn_id', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    type = Column(ForeignKey('ip_address_pool_type.id'), nullable=False)
+    vpn_id = Column(ForeignKey('vpn.id'), nullable=False)
+    address_mask = Column(VARCHAR(100), nullable=False)
+    description = Column(VARCHAR(1000))
+    total_ip_count = Column(NUMBER(asdecimal=False))
+    free_ip_count = Column(NUMBER(asdecimal=False))
+    include_net_addr = Column(NUMBER(asdecimal=False), nullable=False)
+    include_broadcast = Column(NUMBER(asdecimal=False), nullable=False)
+
+    ip_address_pool_type = relationship('IpAddressPoolType')
+    vpn = relationship('Vpn')
+
+
+class Offlinepackageusage(Base):
+    __tablename__ = 'offlinepackageusage'
+    __table_args__ = (
+        Index('uq_offpackusage', 'subsid', 'packageid', 'cardid', 'usagestart', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    subsid = Column(ForeignKey('productsubscription.id', ondelete='CASCADE'), nullable=False)
+    packageid = Column(ForeignKey('productpackage.id'), nullable=False)
+    cardid = Column(ForeignKey('simcard.id'))
+    usagestart = Column(DateTime)
+    usagestop = Column(DateTime)
+    usagevalue = Column(NUMBER(asdecimal=False), nullable=False)
+    actual_limit = Column(NUMBER(asdecimal=False))
+
+    simcard = relationship('Simcard')
+    productpackage = relationship('Productpackage')
+    productsubscription = relationship('Productsubscription')
+
+
+class TrgAction(Base):
+    __tablename__ = 'trg_action'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    action_type_id = Column(ForeignKey('trg_actiontype.id'), nullable=False, index=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
+    params = Column(VARCHAR(200))
+
+    action_type = relationship('TrgActiontype')
+    trigger = relationship('TrgRecord')
+
+
+class TrgActionQueue(Base):
+    __tablename__ = 'trg_action_queue'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False)
+    next_try = Column(DateTime, nullable=False)
+    attempt_count = Column(NUMBER(asdecimal=False))
+    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
+    record_date = Column(DateTime, nullable=False)
+    params = Column(VARCHAR(500))
+
+    card = relationship('Basecard')
+    trigger = relationship('TrgRecord')
+
+
+class TrgBindCard(Base):
+    __tablename__ = 'trg_bind_card'
+    __table_args__ = (
+        CheckConstraint('(CARD_ID IS NOT NULL AND CARD_GROUP_ID IS NULL) OR (CARD_ID IS NULL AND CARD_GROUP_ID IS NOT NULL)'),
+        CheckConstraint('(CARD_ID IS NOT NULL AND CARD_GROUP_ID IS NULL) OR (CARD_ID IS NULL AND CARD_GROUP_ID IS NOT NULL)'),
+        CheckConstraint('ONSTATE in (0,1)'),
+        Index('uq_trg_bind_card', 'trigger_id', 'card_id', 'card_group_id', unique=True)
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
+    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), index=True)
+    card_group_id = Column(ForeignKey('cardgroup.id', ondelete='CASCADE'), index=True)
+    onstate = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("1 "))
+
+    card_group = relationship('Cardgroup')
+    card = relationship('Basecard')
+    trigger = relationship('TrgRecord')
+
+
+class TrgConfigCounter(Base):
+    __tablename__ = 'trg_config_counter'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
+    bill_service = Column(ForeignKey('billservice.id'), nullable=False)
+    measure_unit = Column(ForeignKey('measureunit.id'))
+    limit_value = Column(NUMBER(asdecimal=False), nullable=False)
+    period_id = Column(ForeignKey('timeperiod.id'), nullable=False)
+    changed_date = Column(TIMESTAMP, nullable=False, server_default=text("sysdate "))
+    count_bill_services = Column(VARCHAR(500))
+    count_currency_id = Column(NUMBER(asdecimal=False))
+
+    billservice = relationship('Billservice')
+    measureunit = relationship('Measureunit')
+    period = relationship('Timeperiod')
+    trigger = relationship('TrgRecord')
+
+
+class TrgCounterCard(Base):
+    __tablename__ = 'trg_counter_card'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
+    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
+    usage_start = Column(DateTime, nullable=False)
+    usage_value = Column(NUMBER(asdecimal=False), nullable=False)
+    enqueued = Column(TIMESTAMP)
+
+    card = relationship('Basecard')
+    trigger = relationship('TrgRecord')
+
+
+class TrgCtrlLocationConfig(Base):
+    __tablename__ = 'trg_ctrl_location_config'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
+    check_interval_in_seconds = Column(NUMBER(asdecimal=False), nullable=False)
+
+    trigger = relationship('TrgRecord')
+
+
+class TrgLiveImsiConfig(Base):
+    __tablename__ = 'trg_live_imsi_config'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
+    enabled_action_on_init = Column(NUMBER(asdecimal=False), server_default=text("0"))
+
+    trigger = relationship('TrgRecord')
+
+
+class TrgLocker(Base):
+    __tablename__ = 'trg_locker'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    trigger_id = Column(ForeignKey('trg_record.id', ondelete='CASCADE'), nullable=False, index=True)
+    card_id = Column(ForeignKey('basecard.id', ondelete='CASCADE'), nullable=False, index=True)
+    bill_service = Column(ForeignKey('billservice.id'), nullable=False)
+    lock_date = Column(DateTime, nullable=False)
+
+    billservice = relationship('Billservice')
+    card = relationship('Basecard')
+    trigger = relationship('TrgRecord')
+
+
+class CardGroupToIaPool(Base):
+    __tablename__ = 'card_group_to_ia_pool'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    card_group_id = Column(ForeignKey('cardgroup.id'), nullable=False)
+    pool_id = Column(ForeignKey('ip_address_pool.id'), nullable=False)
+
+    card_group = relationship('Cardgroup')
+    pool = relationship('IpAddressPool')
+
+
+class IpAddres(Base):
+    __tablename__ = 'ip_address'
+    __table_args__ = (
+        ForeignKeyConstraint(['pool_id', 'vpn_id'], ['ip_address_pool.id', 'ip_address_pool.vpn_id']),
+        Index('uq_ia_address_vpn_id', 'address', 'vpn_id', unique=True)
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    address = Column(NUMBER(asdecimal=False), nullable=False)
+    pool_id = Column(NUMBER(asdecimal=False), nullable=False)
+    card_id = Column(ForeignKey('basecard.id'))
+    vpn_id = Column(NUMBER(asdecimal=False), nullable=False)
+    session_id = Column(VARCHAR(256))
+    lease_state = Column(ForeignKey('ip_lease_state.id'), nullable=False, server_default=text("0 "))
+    lease_expiration_date = Column(TIMESTAMP)
+
+    card = relationship('Basecard')
+    ip_lease_state = relationship('IpLeaseState')
+    pool = relationship('IpAddressPool')
+
+
+class TrgCompleteaction(Base):
+    __tablename__ = 'trg_completeaction'
+    __table_args__ = (
+        Index('uq_trg_completeaction', 'action_queue_id', 'action_id', unique=True),
+    )
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    action_id = Column(ForeignKey('trg_action.id', ondelete='CASCADE'), nullable=False, index=True)
+    action_queue_id = Column(ForeignKey('trg_action_queue.id', ondelete='CASCADE'), nullable=False)
+
+    action = relationship('TrgAction')
+    action_queue = relationship('TrgActionQueue')
