@@ -9,8 +9,10 @@ from API.controller.db.VirtualGroup import VirtualGroupDBController
 from API.controller.db.AccountingFile import AccountingFileDBController
 from API.controller.db.Account import AccountDBController
 from API.controller.db.Basecard import BaseCardDBController
+from API.controller.db.SimCardImsi import SimCardImsiDBController
 from API.controller.db.CardSeries import CardSeriesDBController
-
+from API.controller.db.SimCardNumber import SimCardMsisdnDBController
+from API.controller.db.SimCardRate import SimCardNumberRateDBController
 
 class DBClient:
     def __init__(self, url: str, pool_size: int = 5, max_overflow: int = 5):
@@ -34,3 +36,6 @@ class DBClient:
         self.account = AccountDBController(url, pool_size, max_overflow)
         self.base_card = BaseCardDBController(url, pool_size, max_overflow)
         self.card_series = CardSeriesDBController(url, pool_size, max_overflow)
+        self.card_msisdn = SimCardMsisdnDBController(url, pool_size, max_overflow)
+        self.card_imsi = SimCardImsiDBController(url, pool_size, max_overflow)
+        self.card_number_rate = SimCardNumberRateDBController(url, pool_size, max_overflow)
