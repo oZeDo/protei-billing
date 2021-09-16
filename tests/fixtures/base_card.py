@@ -16,8 +16,8 @@ def nonexistent_base_card(clients):
 def base_card_generator(clients):
     _id = []
 
-    def _get(_, virtual_group_id, accounting_file_id, state=2, *args):
-        new_base_card = clients.DB.base_card.create(virtual_group_id, accounting_file_id, state)
+    def _get(_, virtual_group_id, accounting_file_id, series_id, state=2, *args):
+        new_base_card = clients.DB.base_card.create(virtual_group_id, accounting_file_id, series_id, state)
         _id.append(new_base_card.id)
         return new_base_card
 

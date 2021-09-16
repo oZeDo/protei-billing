@@ -8,11 +8,12 @@ fake = Fake()
 
 class BaseCardDBController(BaseDBController):
 
-    def create(self, virtual_group_id, accounting_file_id, state):
+    def create(self, virtual_group_id, accounting_file_id, series_id, state):
         new_base_card = Basecard(id=basecard_id_seq.next_value(),
                                  cardtype=1,
                                  vgroupid=virtual_group_id,
                                  accfileid=accounting_file_id,
+                                 seriesid=series_id,
                                  state=state,
                                  cardnumber=fake.uuid4())
         self.session.add(new_base_card)
