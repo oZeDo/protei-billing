@@ -7,7 +7,7 @@ import pytest
 from lib.utils import Fake
 from API.client.rpc import RPCClient
 from API.client.db import DBClient
-
+from config.db_consts import DB_ORACLE_HOST, DB_ORACLE_PORT
 
 pytest_plugins = [
     "tests.fixtures.company",
@@ -19,7 +19,10 @@ pytest_plugins = [
     "tests.fixtures.base_card",
     "tests.fixtures.card",
     "tests.fixtures.cardgroup",
-    "tests.fixtures.client"
+    "tests.fixtures.client",
+    "tests.fixtures.card_imsi",
+    "tests.fixtures.card_msisdn",
+    "tests.fixtures.card_number_rate",
 ]
 
 fake = Fake()
@@ -113,6 +116,7 @@ def pytest_runtest_teardown():
 @pytest.fixture(autouse=True, scope="class")
 def setup_fixture(request, company_generator, currency_generator, virtual_group_generator, account_generator,
                   accounting_file_generator, card_series_generator, base_card_generator, card_generator,
+                  card_imsi_generator, card_number_rate_generator, card_msisdn_generator,
                   client_generator, cardgroup_generator):
     request.cls.company_generator = company_generator
     request.cls.default_company = company_generator()
@@ -138,11 +142,27 @@ def setup_fixture(request, company_generator, currency_generator, virtual_group_
 
     request.cls.base_card_generator = base_card_generator
     request.cls.default_base_card = base_card_generator(request.cls, request.cls.default_virtual_group.id,
-                                                        request.cls.default_accounting_file.id)
+                                                        request.cls.default_accounting_file.id,
+                                                        request.cls.default_card_series.id)
 
     request.cls.card_generator = card_generator
     request.cls.default_card = card_generator(request.cls, request.cls.default_account.id,
                                               request.cls.default_base_card.id)
+
+    request.cls.card_imsi_generator = card_imsi_generator
+    request.cls.default_card_imsi = card_imsi_generator(request.cls, request.cls.default_card.id,
+                                                       request.cls.default_card.imsi,
+                                                       request.cls.default_virtual_group.id)
+
+    request.cls.card_number_rate_generator = card_number_rate_generator
+    request.cls.default_card_number_rate = card_number_rate_generator(request.cls, request.cls.default_currency.id,
+                                                                      request.cls.default_virtual_group.id)
+
+    request.cls.card_msisdn_generator = card_msisdn_generator
+    request.cls.default_card_msisdn = card_msisdn_generator(request.cls, request.cls.default_card.id,
+                                                            request.cls.default_card.msisdn,
+                                                            request.cls.default_card_number_rate.id,
+                                                            request.cls.default_virtual_group.id)
 
     request.cls.client_generator = client_generator
     request.cls.default_client = client_generator(request.cls, request.cls.default_virtual_group.id)
@@ -150,10 +170,23 @@ def setup_fixture(request, company_generator, currency_generator, virtual_group_
     request.cls.cardgroup_generator = cardgroup_generator
     request.cls.default_cardgroup = cardgroup_generator(request.cls, request.cls.default_client.id)
 
+    print()
+    print(f"{request.cls.default_company}\n"
+          f"{request.cls.default_currency}\n"
+          f"{request.cls.default_virtual_group}\n"
+          f"{request.cls.default_account}\n"
+          f"{request.cls.default_accounting_file}\n"
+          f"{request.cls.default_card_series}\n"
+          f"{request.cls.default_base_card}\n"
+          f"{request.cls.default_card}\n"
+          f"{request.cls.default_card_imsi}\n"
+          f"{request.cls.default_client}\n"
+          f"{request.cls.default_cardgroup}\n")
+
 
 class Clients:
     RPC = RPCClient()
-    DB = DBClient(url='oracle+cx_oracle://pbill:sql@192.168.73.3:1521/orcl')
+    DB = DBClient(url=f'oracle+cx_oracle://pbill:sql@{DB_ORACLE_HOST}:{DB_ORACLE_PORT}/orcl')
 
 
 @pytest.fixture(scope="class", autouse=True)
