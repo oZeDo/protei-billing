@@ -12,7 +12,7 @@ class AccountDBController(BaseDBController):
         account = Account(id=account_id_seq.next_value(),
                           acctype=1,
                           balance=10 ** 6,
-                          limit=0,
+                          nlimit=0,
                           currency=currency_id,
                           vgroupid=virtual_group_id,
                           state_id=2,  # maybe 1? 0?
