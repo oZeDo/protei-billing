@@ -2,7 +2,7 @@ allure-pytest==2.8.22
 attrs==20.3.0
 cattrs==1.1.2
 cx-Oracle==8.0.1
-Faker==5.0.2
+Faker==8.1.2
 pytest==6.1.2
 pytest-testrail==2.9.0
 requests==2.25.0
